@@ -1,3 +1,5 @@
+import { ContentType } from '@/utils/enums';
+
 /**
  * Abstract base class for model objects in the application.
  * Provides common functionality for all models including unique ID generation
@@ -8,6 +10,7 @@
  *
  * @property {string} id - Unique identifier for the model instance, automatically generated
  * @property {string} timestamp - ISO string representation of the creation time
+ * @property {ContentType | undefined} type - Type of content represented by the model
  *
  * @example
  * class MyModel extends BaseModel {
@@ -21,12 +24,23 @@
 export abstract class BaseModel {
     id: string;
     timestamp: string;
+    type: ContentType | undefined;
 
+    /**
+     * Creates an instance of the BaseModel class.
+     * Automatically generates a unique ID and sets the timestamp to the current time.
+     */
     constructor() {
         this.id = this.generateUniqueId();
         this.timestamp = new Date().toISOString();
     }
 
+    /**
+     * Generates a unique identifier for the model instance.
+     * The identifier is a UUID v4-like string.
+     *
+     * @returns {string} A unique identifier
+     */
     private generateUniqueId(): string {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             const r = (Math.random() * 16) | 0;
@@ -35,6 +49,12 @@ export abstract class BaseModel {
         });
     }
 
+    /**
+     * Converts the model instance to a JSON object.
+     * This method can be overridden in subclasses to include additional properties.
+     *
+     * @returns {Record<string, any>} A JSON representation of the model instance
+     */
     toJSON(): Record<string, any> {
         return { ...this };
     }

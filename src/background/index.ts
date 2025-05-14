@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger';
-import { createImageContextMenu } from './contextMenus/createContextMenus';
+import { registerContextMenus } from './contextMenus/createContextMenus';
 import { handleContextMenuActions } from './contextMenus/handlers';
 
 // Background script runs when the extension is loaded or the browser starts
@@ -13,6 +13,6 @@ chrome.runtime.onInstalled.addListener(details => {
         logger.info('Extension updated');
     }
 
-    createImageContextMenu();
+    registerContextMenus();
     chrome.contextMenus.onClicked.addListener((info, tab) => handleContextMenuActions(info, tab));
 });

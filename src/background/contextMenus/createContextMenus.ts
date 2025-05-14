@@ -10,7 +10,7 @@ import { contextMenusList } from './contextMenus';
  *
  * @throws Will log errors if context menu creation fails or if an unexpected error occurs
  */
-export function createImageContextMenu() {
+export function registerContextMenus() {
     try {
         chrome.contextMenus.removeAll(() => {
             for (const contextMenu of contextMenusList) {
