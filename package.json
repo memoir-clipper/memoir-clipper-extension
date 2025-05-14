@@ -1,0 +1,35 @@
+{
+    "name": "memoir-clipper",
+    "version": "1.0.0",
+    "description": "Capture text, images and links fron anywhere on the web.",
+    "type": "module",
+    "scripts": {
+        "dev": "vite --mode development",
+        "build": "tsc && vite build --mode development",
+        "build:dev": "tsc && vite build --mode development",
+        "build:prod": "tsc && vite build --mode production",
+        "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+        "preview": "vite preview"
+    },
+    "keywords": [
+        "chrome-extension",
+        "typescript",
+        "tailwindcss",
+        "vite"
+    ],
+    "author": "Jeel Patel",
+    "license": "MIT",
+    "devDependencies": {
+        "@crxjs/vite-plugin": "^2.0.0-beta.18",
+        "@types/chrome": "^0.0.246",
+        "@types/node": "^20.10.0",
+        "@typescript-eslint/eslint-plugin": "^6.13.1",
+        "@typescript-eslint/parser": "^6.13.1",
+        "autoprefixer": "^10.4.21",
+        "eslint": "^8.54.0",
+        "postcss": "^8.5.3",
+        "tailwindcss": "^3.4.17",
+        "typescript": "^5.3.2",
+        "vite": "^5.0.2"
+    }
+}
