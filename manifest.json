@@ -3,7 +3,7 @@
     "name": "Memoir Clipper",
     "version": "1.0.0",
     "description": "A Chrome extension built with TypeScript, Tailwind CSS and Vite",
-    "permissions": ["storage", "activeTab"],
+    "permissions": ["storage", "activeTab", "contextMenus"],
     "background": {
         "service_worker": "src/background/index.ts",
         "type": "module"

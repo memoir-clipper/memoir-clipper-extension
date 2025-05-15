@@ -1,4 +1,5 @@
-import { TAG, LogLevel, LOG_ENABLED, MINIMUM_LOG_LEVEL } from './constants';
+import { TAG, LOG_ENABLED, MINIMUM_LOG_LEVEL } from './constants';
+import { LogLevel } from './enums';
 
 /**
  * Logger utility for consistent application logging
@@ -11,6 +12,15 @@ class Logger {
         [LogLevel.WARN]: 2,
         [LogLevel.ERROR]: 3,
     };
+
+    private readonly logColors: Record<LogLevel, string> = {
+        [LogLevel.DEBUG]: '\x1b[36m', // Cyan
+        [LogLevel.INFO]: '\x1b[32m', // Green
+        [LogLevel.WARN]: '\x1b[33m', // Yellow
+        [LogLevel.ERROR]: '\x1b[31m', // Red
+    };
+
+    private readonly resetColor: string = '\x1b[0m';
 
     constructor() {
         this.isEnabled = LOG_ENABLED;
@@ -89,11 +99,11 @@ class Logger {
     }
 
     private formatMessage(level: LogLevel, message: string): string {
-        return `[${TAG}][${level}] ${message}`;
+        return `${this.logColors[level]}[${TAG}][${level}] ${message}${this.resetColor}`;
     }
 
     private formatLabel(label: string): string {
-        return `[${TAG}] ${label}`;
+        return `\x1b[35m[${TAG}] ${label}${this.resetColor}`; // Purple for labels
     }
 }
 
