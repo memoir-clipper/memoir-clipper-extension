@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger';
-import { detectTextSelection } from './textSelectionDetector';
+import { detectTextSelection } from '@/content/textExtraction/textSelectionDetector';
 import { TextModel } from '@/models/textModel';
 import { TEXT_SELECTED_ACTION } from '@/utils/actions';
 
