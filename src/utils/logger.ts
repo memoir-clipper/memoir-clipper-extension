@@ -98,8 +98,19 @@ class Logger {
         return this.isEnabled && this.logLevelPriority[level] >= this.logLevelPriority[MINIMUM_LOG_LEVEL];
     }
 
+    private getTimestamp(): string {
+        const now = new Date();
+
+        // Format: HH:MM:SS.mmm
+        const time = now.toTimeString().split(' ')[0];
+        const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+
+        return `${time}.${milliseconds}`;
+    }
+
     private formatMessage(level: LogLevel, message: string): string {
-        return `${this.logColors[level]}[${TAG}][${level}] ${message}${this.resetColor}`;
+        const timestamp = this.getTimestamp();
+        return `${this.logColors[level]}[${timestamp}][${TAG}][${level}] ${message}${this.resetColor}`;
     }
 
     private formatLabel(label: string): string {
