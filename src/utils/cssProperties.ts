@@ -6,9 +6,11 @@ export const CSS_PROPS = {
     FONT_STYLE: 'fontStyle',
     TEXT_DECORATION: 'textDecoration',
     BOLD: 'bold',
+    BOLDER: 'bolder',
     ITALIC: 'italic',
     UNDERLINE: 'underline',
     LINE_THROUGH: 'line-through',
+    STRIKETHROUGH: 'strikethrough',
 };
 
 // Font weight threshold for bold text

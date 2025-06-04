@@ -61,20 +61,42 @@ export const TEXT_SELECTION_EXCLUSIONS = `${TAGS.INPUT}, ${TAGS.TEXTAREA}, [cont
 
 // Common tag groups
 export const TEXT_FORMATTING_TAGS = {
-    BOLD: [TAGS.STRONG, TAGS.BOLD],
-    ITALIC: [TAGS.EMPHASIS, TAGS.ITALIC],
-    UNDERLINE: [TAGS.UNDERLINE, TAGS.INS],
-    STRIKETHROUGH: [TAGS.STRIKETHROUGH, TAGS.STRIKE, TAGS.DEL],
+    BOLD: new Set([TAGS.STRONG, TAGS.BOLD]),
+    ITALIC: new Set([TAGS.EMPHASIS, TAGS.ITALIC]),
+    UNDERLINE: new Set([TAGS.UNDERLINE, TAGS.INS]),
+    STRIKETHROUGH: new Set([TAGS.STRIKETHROUGH, TAGS.STRIKE, TAGS.DEL]),
 };
 
-export const CODE_TAGS = [TAGS.CODE, TAGS.PRE];
-export const QUOTE_TAGS = [TAGS.BLOCKQUOTE, TAGS.QUOTE];
-export const LIST_TAGS = [TAGS.UL, TAGS.OL];
-export const TABLE_CELL_TAGS = [TAGS.TD, TAGS.TH];
+export const CODE_TAGS = new Set([TAGS.CODE, TAGS.PRE]);
+export const QUOTE_TAGS = new Set([TAGS.BLOCKQUOTE, TAGS.QUOTE]);
+export const LIST_TAGS = new Set([TAGS.UL, TAGS.OL]);
+export const TABLE_CELL_TAGS = new Set([TAGS.TD, TAGS.TH]);
 
-export const BLOCK_ELEMENTS = [TAGS.PARAGRAPH, TAGS.DIV, TAGS.H1, TAGS.H2, TAGS.H3, TAGS.H4, TAGS.H5, TAGS.H6, TAGS.LI, TAGS.TR, TAGS.BR];
+export const BLOCK_ELEMENTS = new Set([
+    TAGS.PARAGRAPH,
+    TAGS.DIV,
+    TAGS.H1,
+    TAGS.H2,
+    TAGS.H3,
+    TAGS.H4,
+    TAGS.H5,
+    TAGS.H6,
+    TAGS.LI,
+    TAGS.TR,
+    TAGS.BR,
+]);
 
-export const MAJOR_BLOCK_ELEMENTS = [TAGS.PARAGRAPH, TAGS.DIV, TAGS.H1, TAGS.H2, TAGS.H3, TAGS.H4, TAGS.H5, TAGS.H6, TAGS.TABLE];
+export const MAJOR_BLOCK_ELEMENTS = new Set([
+    TAGS.PARAGRAPH,
+    TAGS.DIV,
+    TAGS.H1,
+    TAGS.H2,
+    TAGS.H3,
+    TAGS.H4,
+    TAGS.H5,
+    TAGS.H6,
+    TAGS.TABLE,
+]);
 
 // Helper function to check if a tag is a heading
 export const isHeadingTag = (tag: string): boolean => /^h[1-6]$/.test(tag);
