@@ -3,7 +3,9 @@ import { logger } from '@/utils/logger';
 import { ImageModel } from '@/models/imageModel';
 import { LinkModel } from '@/models/linkModel';
 import { PageModel } from '@/models/pageModel';
-import { TEXT_SELECTED_ACTION } from '@/utils/actions';
+import { ACTION_GET_SELECTED_TEXT } from '@/utils/actions';
+import { ExtensionMessage } from '@/models/extensionMessage';
+import { ExtensionResponse } from '@/models/extensionReponse';
 
 /**
  * Handles various context menu click actions based on the menu item ID.
@@ -37,14 +39,23 @@ export function handleContextMenuActions(info: chrome.contextMenus.OnClickData, 
 
         case ID_TEXT_CONTEXT_MENU:
             if (tab?.id) {
-                chrome.tabs.sendMessage(tab.id, { action: TEXT_SELECTED_ACTION }, response => {
+                const message = ExtensionMessage.create(ACTION_GET_SELECTED_TEXT);
+
+                chrome.tabs.sendMessage(tab.id, message.toJSON(), rawResponse => {
                     if (chrome.runtime.lastError) {
                         logger.error('Error getting selected text:', chrome.runtime.lastError);
                         return;
                     }
 
-                    if (response?.success && response?.model) {
-                        logger.debug('Text context menu clicked:', response.model);
+                    const response = new ExtensionResponse(
+                        rawResponse?.success ?? false,
+                        rawResponse?.data,
+                        rawResponse?.error,
+                        rawResponse?.requestId ?? message.requestId,
+                    );
+
+                    if (response.isSuccess()) {
+                        logger.debug('Text context menu clicked:', response.data);
                     } else {
                         logger.warn('No valid text selection was found');
                     }

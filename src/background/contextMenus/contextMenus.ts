@@ -1,5 +1,10 @@
 import { ID_IMAGE_CONTEXT_MENU, ID_LINK_CONTEXT_MENU, ID_PAGE_CONTEXT_MENU, ID_TEXT_CONTEXT_MENU } from '@/utils/ids';
-import { LABEL_IMAGE_CONTEXT_MENU, LABEL_LINK_CONTEXT_MENU, LABEL_PAGE_CONTEXT_MENU, LABEL_TEXT_CONTEXT_MENU } from '@/utils/strings';
+import {
+    LABEL_IMAGE_CONTEXT_MENU,
+    LABEL_LINK_CONTEXT_MENU,
+    LABEL_PAGE_CONTEXT_MENU,
+    LABEL_TEXT_CONTEXT_MENU,
+} from '@/utils/strings';
 
 const allDocumentUrlPatterns = ['http://*/*', 'https://*/*'];
 
