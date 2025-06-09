@@ -95,7 +95,10 @@ class Logger {
     }
 
     private shouldLog(level: LogLevel): boolean {
-        return this.isEnabled && this.logLevelPriority[level] >= this.logLevelPriority[MINIMUM_LOG_LEVEL];
+        return (
+            this.isEnabled &&
+            this.logLevelPriority[level] >= this.logLevelPriority[MINIMUM_LOG_LEVEL]
+        );
     }
 
     private getTimestamp(): string {
