@@ -3,37 +3,21 @@ import { BaseModel } from './baseModel';
 import { logger } from '@/utils/logger';
 
 /**
- * Represents a link captured from a web page.
- * Extends the BaseModel class with additional properties specific to captured links.
+ * Represents a link captured from a web page with target URL and page context.
  */
 export class LinkModel extends BaseModel {
-    /** The URL of the link */
     href: string | undefined;
-
-    /** The URL of the page where the link was captured */
     pageUrl: string | undefined;
-
-    /** The URL of the favicon of the page */
     faviconUrl: string | undefined;
-
-    /** The title of the page */
     title: string | undefined;
 
-    /**
-     * Creates a new instance of the link model.
-     * @param info - The context menu click data containing information about the clicked element.
-     * @param tab - The tab where the click occurred. May be undefined if not available.
-     */
     constructor(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
         super();
         this.type = ContentType.LINK;
         this.create(info, tab);
     }
 
-    /**
-     * Converts the link model instance to a JSON object.
-     * @returns A JSON representation of the link model instance.
-     */
+    /** Populates link data from context menu info and tab. */
     private create(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
         this.href = info.linkUrl;
         this.pageUrl = tab?.url;
@@ -41,10 +25,7 @@ export class LinkModel extends BaseModel {
         this.title = tab?.title;
     }
 
-    /**
-     * Checks if the link's domain is the same as the page's domain.
-     * @returns True if the domains are the same, false otherwise.
-     */
+    /** Checks if link domain matches page domain for favicon usage. */
     private isSameDomainAsPage(): boolean {
         if (!this.pageUrl || !this.href) {
             return false;
