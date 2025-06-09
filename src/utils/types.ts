@@ -1,17 +1,16 @@
 import type { TextModel } from '@/models/textModel';
 
-export type HandleTextSelectionCallback = (model: TextModel, position: MenuPosition, selectionRect: DOMRect) => void;
+export interface SelectionState {
+    textModel: TextModel;
+    selectionRect: DOMRect;
+    selectionId: string;
+}
+
+export interface MenuPosition {
+    x: number;
+    y: number;
+}
 
 export type SelectionCallback = (state: SelectionState) => void;
 
-export type MenuPosition = {
-    x: number;
-    y: number;
-};
-
-export type SelectionState = {
-    textModel: TextModel;
-    position: MenuPosition;
-    selectionRect: DOMRect;
-    selectionId: string;
-};
+export type ShortcutCallback = (event: KeyboardEvent) => void;

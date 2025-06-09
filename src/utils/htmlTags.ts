@@ -57,7 +57,15 @@ export const TAGS = {
 };
 
 // These selectors are used to exclude certain elements from text selection
-export const TEXT_SELECTION_EXCLUSIONS = `${TAGS.INPUT}, ${TAGS.TEXTAREA}, [contenteditable="true"], ${TAGS.BUTTON}, ${TAGS.IMG}, ${TAGS.SELECT}, [role="button"]`;
+export const TEXT_SELECTION_EXCLUSIONS = [
+    `${TAGS.INPUT}`,
+    `${TAGS.TEXTAREA}`,
+    `[contenteditable="true"]`,
+    `${TAGS.BUTTON}`,
+    `${TAGS.IMG}`,
+    `${TAGS.SELECT}`,
+    `[role="button"]`,
+];
 
 // Common tag groups
 export const TEXT_FORMATTING_TAGS = {

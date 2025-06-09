@@ -41,6 +41,18 @@ export enum ListType {
     NONE = '',
 }
 
+/**
+ * Enum representing the types of reasons for hiding a menu.
+ */
+export enum MenuHideReason {
+    MANUAL = 'manual',
+    CLICK_OUTSIDE = 'clickOutside',
+    ESCAPE_KEY = 'escapeKey',
+    SCROLL = 'scroll',
+    RESIZE = 'resize',
+    AUTO_HIDE = 'autoHide',
+}
+
 // Validation utilities
 export const isValidTextContentType = (value: string): value is TextContentType =>
     Object.values(TextContentType).includes(value as TextContentType);

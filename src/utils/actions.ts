@@ -1,1 +1,1 @@
-export const TEXT_SELECTED_ACTION = 'getSelectedText';
+export const ACTION_GET_SELECTED_TEXT = 'getSelectedText';
