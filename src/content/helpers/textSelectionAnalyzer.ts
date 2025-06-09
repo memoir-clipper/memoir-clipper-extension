@@ -1,8 +1,8 @@
 import type { TextContextData } from '@/models/textContextData';
 import { TextContentType, ListType } from '@/utils/enums';
-import { TextFormattingDetector } from '@/content/textProcessing/textFormattingDetector';
-import { ContentTypeDetector } from '@/content/textProcessing/contentTypeDetector';
-import { HtmlProcessor } from '@/content/textProcessing/htmlProcessor';
+import { TextFormattingDetector } from '@/content/helpers/textFormattingDetector';
+import { ContentTypeDetector } from '@/content/helpers/contentTypeDetector';
+import { HtmlProcessor } from '@/content/helpers/htmlProcessor';
 import { TAGS } from '@/utils/htmlTags';
 
 /**
