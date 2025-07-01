@@ -13,27 +13,39 @@ export class ExtensionResponse<T = unknown> {
         this.timestamp = Date.now();
     }
 
-    static success<T>(data: T, requestId?: string): ExtensionResponse<T> {
+    // --- Static Factory Methods ---
+
+    /** Create a successful response */
+    public static success<T>(data: T, requestId?: string): ExtensionResponse<T> {
         return new ExtensionResponse(true, data, undefined, requestId);
     }
 
-    static error<T = never>(error: string, requestId?: string): ExtensionResponse<T> {
-        return new ExtensionResponse(false, undefined, error, requestId) as ExtensionResponse<T>;
+    /** Create an error response */
+    public static error<T = never>(error: string, requestId?: string): ExtensionResponse<T> {
+        return new ExtensionResponse(false, undefined as T, error, requestId);
     }
 
-    static fromMessage<T>(message: { requestId?: string }, data?: T, error?: string): ExtensionResponse<T> {
+    /** Create a response from a message object */
+    public static fromMessage<T>(message: { requestId?: string }, data?: T, error?: string): ExtensionResponse<T> {
         return new ExtensionResponse(!error, data, error, message.requestId);
     }
 
-    isSuccess(): this is ExtensionResponse<T> & { success: true; data: T } {
+    // --- Type Guards ---
+
+    /** Returns true if the response is successful and has data */
+    public isSuccess(): this is ExtensionResponse<T> & { success: true; data: T } {
         return this.success && this.data !== undefined;
     }
 
-    isError(): this is ExtensionResponse<T> & { success: false; error: string } {
+    /** Returns true if the response is an error */
+    public isError(): this is ExtensionResponse<T> & { success: false; error: string } {
         return !this.success;
     }
 
-    toJSON() {
+    // --- Serialization & Representation ---
+
+    /** Serialize the response to a plain object */
+    public toJSON(): Record<string, unknown> {
         return {
             success: this.success,
             data: this.data,
@@ -43,7 +55,8 @@ export class ExtensionResponse<T = unknown> {
         };
     }
 
-    toString(): string {
+    /** String representation of the response */
+    public toString(): string {
         return `ExtensionResponse[${this.success ? 'SUCCESS' : 'ERROR'}]${this.requestId ? `(${this.requestId})` : ''}`;
     }
 }
