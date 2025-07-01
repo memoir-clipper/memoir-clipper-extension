@@ -1,29 +1,35 @@
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/helpers/logger';
 import { contextMenusList } from './contextMenus';
 
+// --- Context Menu Helpers ---
+
+function removeAllContextMenus(callback: () => void): void {
+    chrome.contextMenus.removeAll(callback);
+}
+
+function createContextMenu(contextMenu: chrome.contextMenus.CreateProperties): void {
+    chrome.contextMenus.create(contextMenu, () => {
+        if (chrome.runtime.lastError) {
+            logger.error('Error creating context menu:', chrome.runtime.lastError);
+        } else {
+            logger.debug('Context menu created successfully:', contextMenu.title);
+        }
+    });
+}
+
+// --- Context Menu Registration ---
+
 /**
- * Creates Chrome context menu items for images.
- *
- * This function first removes all existing context menus and then
- * creates new context menu items based on the predefined contextMenusList.
- * Success or failure of each menu item creation is logged.
- *
- * @throws Will log errors if context menu creation fails or if an unexpected error occurs
+ * Registers all context menu items for the extension.
  */
-export function registerContextMenus() {
+export function registerContextMenus(): void {
+    logger.info('Registering context menus');
+
     try {
-        chrome.contextMenus.removeAll(() => {
-            for (const contextMenu of contextMenusList) {
-                chrome.contextMenus.create(contextMenu, () => {
-                    if (chrome.runtime.lastError) {
-                        logger.error('Error creating context menu:', chrome.runtime.lastError);
-                    } else {
-                        logger.debug('Context menu created successfully for contexts:', contextMenu.contexts);
-                    }
-                });
-            }
+        removeAllContextMenus(() => {
+            contextMenusList.forEach(createContextMenu);
         });
     } catch (error) {
-        logger.error('Unexpected error creating context menu:', error);
+        logger.error('Unexpected error during context menu registration:', error);
     }
 }

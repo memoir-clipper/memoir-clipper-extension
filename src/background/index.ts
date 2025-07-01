@@ -1,18 +1,29 @@
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/helpers/logger';
 import { registerContextMenus } from './contextMenus/createContextMenus';
 import { handleContextMenuActions } from './contextMenus/handlers';
 
-// Background script runs when the extension is loaded or the browser starts
-logger.info('Background script loaded');
+// --- Event Handlers ---
 
-// Listen for installation and set up all context menu functionality
-chrome.runtime.onInstalled.addListener(details => {
+function handleInstallation(details: chrome.runtime.InstalledDetails): void {
     if (details.reason === 'install') {
         logger.info('Extension installed');
     } else if (details.reason === 'update') {
         logger.info('Extension updated');
     }
-
     registerContextMenus();
-    chrome.contextMenus.onClicked.addListener((info, tab) => handleContextMenuActions(info, tab));
-});
+}
+
+// --- Initialization ---
+
+function initializeBackgroundScript(): void {
+    logger.info('Background script initialization started');
+
+    chrome.runtime.onInstalled.addListener(handleInstallation);
+    chrome.contextMenus.onClicked.addListener(handleContextMenuActions);
+
+    logger.info('Background script initialized successfully');
+}
+
+// --- Entry Point ---
+
+initializeBackgroundScript();
