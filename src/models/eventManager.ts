@@ -1,11 +1,10 @@
-/**
- * Utility class for managing event listeners with automatic cleanup
- */
 export class EventManager {
     private cleanupFunctions: Array<() => void> = [];
 
+    // --- Add Event Handlers ---
+
     /**
-     * Add an event listener and track it for cleanup
+     * Add a single event handler and track it for cleanup.
      */
     public addEventHandler(
         target: EventTarget,
@@ -18,7 +17,7 @@ export class EventManager {
     }
 
     /**
-     * Add multiple event handlers at once
+     * Add multiple event handlers at once.
      */
     public addEventHandlers(
         handlers: Array<{
@@ -33,8 +32,10 @@ export class EventManager {
         });
     }
 
+    // --- Cleanup ---
+
     /**
-     * Remove all tracked event listeners
+     * Remove all tracked event listeners.
      */
     public cleanup(): void {
         this.cleanupFunctions.forEach(cleanup => {
@@ -47,8 +48,10 @@ export class EventManager {
         this.cleanupFunctions.length = 0;
     }
 
+    // --- Info ---
+
     /**
-     * Get the number of tracked event handlers
+     * Get the number of tracked event handlers.
      */
     public getHandlerCount(): number {
         return this.cleanupFunctions.length;
