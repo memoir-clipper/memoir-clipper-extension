@@ -1,16 +1,27 @@
-/**
- * Injects Tailwind CSS into the current document by appending a link element
- * to the document head.
- *
- * @remarks
- * This should be called in content scripts or extension pages where Tailwind styling
- * is required but cannot be included directly.
- * @returns {void}
- */
-export function injectTailwind(): void {
+// --- Imports ---
+import { logger } from '@/utils/helpers/logger';
+
+// --- DOM Manipulation ---
+
+function createTailwindLink(): HTMLLinkElement {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.type = 'text/css';
     link.href = chrome.runtime.getURL('src/styles/tailwind.css');
-    document.head.appendChild(link);
+    return link;
+}
+
+// --- Tailwind Injection ---
+
+/**
+ * Inject Tailwind CSS into the current document.
+ */
+export function injectTailwind(): void {
+    try {
+        const link = createTailwindLink();
+        document.head.appendChild(link);
+        logger.info('Tailwind CSS injected successfully');
+    } catch (error) {
+        logger.error('Failed to inject Tailwind CSS:', error);
+    }
 }
