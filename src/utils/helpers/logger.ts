@@ -1,4 +1,4 @@
-import { TAG, LOG_ENABLED, MINIMUM_LOG_LEVEL } from '../values/constants';
+import { TAG, MINIMUM_LOG_LEVEL } from '../values/constants';
 import { LogLevel } from '../values/enums';
 
 /**
@@ -6,7 +6,6 @@ import { LogLevel } from '../values/enums';
  * Supports log levels, grouping, and performance timing.
  */
 class Logger {
-    private readonly isEnabled: boolean;
     private readonly logLevelPriority: Record<LogLevel, number> = {
         [LogLevel.DEBUG]: 0,
         [LogLevel.INFO]: 1,
@@ -22,10 +21,6 @@ class Logger {
     };
 
     private readonly resetColor: string = '\x1b[0m';
-
-    constructor() {
-        this.isEnabled = LOG_ENABLED;
-    }
 
     // --- Core Logging Methods ---
 
@@ -48,29 +43,21 @@ class Logger {
     // --- Group Logging Methods ---
 
     public group(label: string): void {
-        if (this.isEnabled) {
-            console.group(this.formatLabel(label));
-        }
+        console.group(this.formatLabel(label));
     }
 
     public groupEnd(): void {
-        if (this.isEnabled) {
-            console.groupEnd();
-        }
+        console.groupEnd();
     }
 
     // --- Performance Logging Methods ---
 
     public time(label: string): void {
-        if (this.isEnabled) {
-            console.time(this.formatLabel(label));
-        }
+        console.time(this.formatLabel(label));
     }
 
     public timeEnd(label: string): void {
-        if (this.isEnabled) {
-            console.timeEnd(this.formatLabel(label));
-        }
+        console.timeEnd(this.formatLabel(label));
     }
 
     // --- Helper Methods ---
@@ -98,7 +85,7 @@ class Logger {
     }
 
     private shouldLog(level: LogLevel): boolean {
-        return this.isEnabled && this.logLevelPriority[level] >= this.logLevelPriority[MINIMUM_LOG_LEVEL];
+        return this.logLevelPriority[level] >= this.logLevelPriority[MINIMUM_LOG_LEVEL];
     }
 
     private getTimestamp(): string {
