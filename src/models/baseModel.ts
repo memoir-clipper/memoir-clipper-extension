@@ -1,4 +1,4 @@
-import type { ContentType } from '@/utils/enums';
+import type { ContentType } from '@/utils/values/enums';
 
 /**
  * Base class for all model objects with automatic ID generation and timestamps.

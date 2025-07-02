@@ -1,4 +1,4 @@
-import { ContentType } from '@/utils/enums';
+import { ContentType } from '@/utils/values/enums';
 import { BaseModel } from './baseModel';
 
 /**
@@ -11,12 +11,7 @@ export class PageModel extends BaseModel {
 
     constructor(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
         super();
-        this.create(info, tab);
         this.type = ContentType.PAGE;
-    }
-
-    /** Populates page data from context menu info and tab. */
-    private create(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
         this.pageUrl = info.pageUrl;
         this.faviconUrl = tab?.favIconUrl;
         this.title = tab?.title;

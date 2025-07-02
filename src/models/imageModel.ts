@@ -1,4 +1,4 @@
-import { ContentType } from '@/utils/enums';
+import { ContentType } from '@/utils/values/enums';
 import { BaseModel } from './baseModel';
 
 /**
@@ -13,11 +13,10 @@ export class ImageModel extends BaseModel {
     constructor(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
         super();
         this.type = ContentType.IMAGE;
-        this.create(info, tab);
+        this.populateFromContextMenu(info, tab);
     }
 
-    /** Populates image data from context menu info and tab. */
-    private create(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
+    private populateFromContextMenu(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined): void {
         this.srcUrl = info.srcUrl;
         this.pageUrl = tab?.url;
         this.faviconUrl = tab?.favIconUrl;

@@ -1,6 +1,6 @@
-import { ContentType } from '@/utils/enums';
+import { ContentType } from '@/utils/values/enums';
 import { BaseModel } from './baseModel';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/helpers/logger';
 
 /**
  * Represents a link captured from a web page with target URL and page context.
@@ -14,28 +14,34 @@ export class LinkModel extends BaseModel {
     constructor(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
         super();
         this.type = ContentType.LINK;
-        this.create(info, tab);
+        this.populateFromContextMenu(info, tab);
     }
 
-    /** Populates link data from context menu info and tab. */
-    private create(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined) {
+    private populateFromContextMenu(info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined): void {
         this.href = info.linkUrl;
         this.pageUrl = tab?.url;
-        if (this.isSameDomainAsPage()) this.faviconUrl = tab?.favIconUrl;
         this.title = tab?.title;
+
+        if (this.isSameDomainAsPage()) {
+            this.faviconUrl = tab?.favIconUrl;
+        }
     }
 
-    /** Checks if link domain matches page domain for favicon usage. */
     private isSameDomainAsPage(): boolean {
         if (!this.pageUrl || !this.href) {
             return false;
         }
+
         try {
             const pageUrlDomain = new URL(this.pageUrl).hostname;
             const hrefDomain = new URL(this.href).hostname;
             return pageUrlDomain === hrefDomain;
-        } catch (e) {
-            logger.error('Error comparing href and pageUrl domains:', e);
+        } catch (error) {
+            logger.error('LinkModel: Error comparing domains', {
+                pageUrl: this.pageUrl,
+                href: this.href,
+                error,
+            });
             return false;
         }
     }
