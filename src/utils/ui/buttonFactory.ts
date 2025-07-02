@@ -1,7 +1,7 @@
 import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
-import { EVENTS } from '@/utils/values/constants';
+import { EVENTS } from '@/utils/values/enums';
 import { BaseFactory, BaseInstance } from './baseFactory';
 import {
     CLASS_BUTTON_CONTAINER,
