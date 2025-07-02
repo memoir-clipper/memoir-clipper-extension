@@ -6,37 +6,38 @@ import {
     QUOTE_TAGS,
     LIST_TAGS,
     TABLE_CELL_TAGS,
-} from '@/utils/htmlTags';
-import type { TextContextData } from '@/models/textContextData';
-import { TextContentType, ListType } from '@/utils/enums';
+} from '@/utils/values/htmlTags';
+import { TextContentType, ListType } from '@/utils/values/enums';
+import type { TextContextData } from '@/utils/values/types';
 
-/**
- * ContentTypeDetector class analyzes HTML elements to determine their content type
- * and structural context, such as headings, code blocks, quotes, tables, lists, and list items.
- */
 export class ContentTypeDetector {
     private static readonly LANGUAGE_CLASS_PATTERN = /^(?:language-|lang-)(.+)$/;
 
-    /**
-     * Analyzes an element to determine its content type
-     */
-    public detect(element: HTMLElement, tagName: string, contextData: TextContextData): void {
-        if (!element || !tagName || !contextData) {
-            return;
-        }
+    // --- Main Detection Entrypoint ---
 
+    public detect(element: HTMLElement, tagName: string, contextData: TextContextData): void {
+        if (!element || !tagName || !contextData) return;
+
+        // Headings
         this.detectHeading(tagName, contextData);
+
+        // Code
         this.detectCodeBlock(element, tagName, contextData);
+
+        // Quotes
         this.detectQuote(tagName, contextData);
+
+        // Tables
         this.detectTable(element, tagName, contextData);
         this.detectTableCell(tagName, contextData);
+
+        // Lists
         this.detectList(element, tagName, contextData);
         this.detectListItem(element, tagName, contextData);
     }
 
-    /**
-     * Detects the content type of a heading element
-     */
+    // --- Heading Detection ---
+
     private detectHeading(tagName: string, contextData: TextContextData): void {
         if (isHeadingTag(tagName)) {
             contextData.contentType = TextContentType.HEADING;
@@ -44,52 +45,38 @@ export class ContentTypeDetector {
         }
     }
 
-    /**
-     * Detects if the element is a code block and updates the context data accordingly
-     */
+    // --- Code Block Detection ---
+
     private detectCodeBlock(element: HTMLElement, tagName: string, contextData: TextContextData): void {
-        if (!CODE_TAGS.has(tagName)) {
-            return;
-        }
+        if (!CODE_TAGS.has(tagName)) return;
 
         contextData.contentType = TextContentType.CODE;
         contextData.codeLanguage = this.extractCodeLanguage(element);
     }
 
     /**
-     * Extracts the programming language from the class attribute of a code block element
-     * @param element - The HTML element to analyze
-     * @returns The programming language as a string, or an empty string if not found
+     * Extracts the programming language from the class attribute of a code block element.
      */
     private extractCodeLanguage(element: HTMLElement): string {
-        const classArray = Array.from(element.classList);
-
-        for (const className of classArray) {
+        for (const className of Array.from(element.classList)) {
             const match = className.match(ContentTypeDetector.LANGUAGE_CLASS_PATTERN);
-            if (match?.[1]) {
-                return match[1];
-            }
+            if (match?.[1]) return match[1];
         }
-
         return '';
     }
 
-    /**
-     * Detects if the element is a quote and updates the context data accordingly
-     */
+    // --- Quote Detection ---
+
     private detectQuote(tagName: string, contextData: TextContextData): void {
         if (QUOTE_TAGS.has(tagName)) {
             contextData.contentType = TextContentType.QUOTE;
         }
     }
 
-    /**
-     * Detects if the element is a table and updates the context data accordingly
-     */
+    // --- Table Detection ---
+
     private detectTable(element: HTMLElement, tagName: string, contextData: TextContextData): void {
-        if (tagName !== TAGS.TABLE) {
-            return;
-        }
+        if (tagName !== TAGS.TABLE) return;
 
         contextData.contentType = TextContentType.TABLE;
         contextData.inTable = true;
@@ -97,11 +84,13 @@ export class ContentTypeDetector {
     }
 
     /**
-     * Analyzes the structure of a table to determine its rows, columns, and header presence
-     * @param table - The HTML table element to analyze
-     * @returns An object containing the number of rows, columns, and whether it has a header
+     * Returns table structure info: rows, columns, header presence.
      */
-    private analyzeTableStructure(table: HTMLElement) {
+    private analyzeTableStructure(table: HTMLElement): {
+        rows: number;
+        cols: number;
+        hasHeader: boolean;
+    } {
         const rowElements = table.getElementsByTagName('tr');
         const rows = rowElements.length;
 
@@ -117,35 +106,24 @@ export class ContentTypeDetector {
         return { rows, cols, hasHeader };
     }
 
-    /**
-     * Detects if the element is a table cell and updates the context data accordingly
-     */
     private detectTableCell(tagName: string, contextData: TextContextData): void {
         if (TABLE_CELL_TAGS.has(tagName)) {
             contextData.inTable = true;
         }
     }
 
-    /**
-     * Detects if the element is a list and updates the context data accordingly
-     */
+    // --- List & List Item Detection ---
+
     private detectList(element: HTMLElement, tagName: string, contextData: TextContextData): void {
-        if (!LIST_TAGS.has(tagName)) {
-            return;
-        }
+        if (!LIST_TAGS.has(tagName)) return;
 
         contextData.contentType = TextContentType.LIST;
         contextData.listType = tagName === TAGS.UL ? ListType.UNORDERED : ListType.ORDERED;
         contextData.listNestingLevel = this.calculateListNestingLevel(element);
     }
 
-    /**
-     * Detects if the element is a list item and updates the context data accordingly
-     */
     private detectListItem(element: HTMLElement, tagName: string, contextData: TextContextData): void {
-        if (tagName !== TAGS.LI) {
-            return;
-        }
+        if (tagName !== TAGS.LI) return;
 
         if (contextData.contentType === TextContentType.UNKNOWN) {
             contextData.contentType = TextContentType.LIST_ITEM;
@@ -155,9 +133,7 @@ export class ContentTypeDetector {
     }
 
     /**
-     * Calculates the nesting level of a list item based on its parent elements
-     * @param element - The HTML element to analyze
-     * @returns The nesting level of the list item
+     * Calculates the nesting level of a list item based on its parent elements.
      */
     private calculateListNestingLevel(element: HTMLElement): number {
         let nestingLevel = 0;
@@ -175,14 +151,11 @@ export class ContentTypeDetector {
     }
 
     /**
-     * Returns the index of the element among its siblings, starting from 1
-     * @param element - The HTML element to find the index for
+     * Returns the index of the element among its siblings, starting from 1.
      */
     private getElementIndex(element: HTMLElement): number {
         const parent = element.parentElement;
-        if (!parent) {
-            return 0;
-        }
+        if (!parent) return 0;
 
         const siblings = Array.from(parent.children);
         return siblings.indexOf(element) + 1;

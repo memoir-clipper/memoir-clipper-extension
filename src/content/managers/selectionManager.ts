@@ -1,16 +1,12 @@
 import { TextModel } from '@/models/textModel';
-import type { SelectionState, SelectionCallback } from '@/utils/types';
-import { EVENTS } from '@/utils/constants';
+import type { SelectionState, SelectionCallback } from '@/utils/values/types';
+import { EVENTS } from '@/utils/values/enums';
 import { EventManager } from '@/models/eventManager';
-import { logger } from '@/utils/logger';
-import { getFaviconUrl } from '@/utils/getFavicon';
+import { logger } from '@/utils/helpers/logger';
+import { getFaviconUrl } from '@/utils/helpers/getFavicon';
 import { TextSelectionAnalyzer } from '@/content/helpers/textSelectionAnalyzer';
-import { getValidSelection } from '@/utils/getValidTextSelection';
+import { getValidSelection } from '@/utils/helpers/getValidTextSelection';
 
-/**
- * Detects text selections on web pages and notifies subscribers.
- * Handles both mouse and keyboard selection methods with validation.
- */
 export class SelectionManager {
     private readonly eventManager = new EventManager();
     private isDetectionInitialized = false;
@@ -18,37 +14,16 @@ export class SelectionManager {
     private onSelectionCallbacks: SelectionCallback[] = [];
     private isDestroyed = false;
 
+    // --- Lifecycle ---
+
     constructor() {
-        this.registerSelectionEventHandlers();
-    }
-
-    /** Registers callback for new text selections. */
-    public onSelection(callback: SelectionCallback): void {
-        if (this.isDestroyed) return;
-        this.onSelectionCallbacks.push(callback);
-    }
-
-    /** Returns current selection state or null if none/destroyed. */
-    public getCurrentSelection(): SelectionState | null {
-        return this.isDestroyed ? null : this.currentSelection;
-    }
-
-    /** Checks if valid selection exists. */
-    public hasSelection(): boolean {
-        return !this.isDestroyed && this.currentSelection !== null;
-    }
-
-    /** Removes specific selection callback. */
-    public removeCallback(callback: SelectionCallback): void {
-        if (this.isDestroyed) return;
-        this.onSelectionCallbacks = this.onSelectionCallbacks.filter(cb => cb !== callback);
+        this.initSelectionDetection();
     }
 
     /** Cleans up all resources and event listeners. */
     public destroy(): void {
         if (this.isDestroyed) return;
         this.isDestroyed = true;
-
         try {
             this.eventManager.cleanup();
             this.onSelectionCallbacks.length = 0;
@@ -59,20 +34,41 @@ export class SelectionManager {
         }
     }
 
-    /** Sets up mouse and keyboard selection event listeners. */
-    private registerSelectionEventHandlers(): void {
+    // --- Public API ---
+
+    public onSelection(callback: SelectionCallback): void {
+        if (this.isDestroyed) return;
+        this.onSelectionCallbacks.push(callback);
+    }
+
+    public removeCallback(callback: SelectionCallback): void {
+        if (this.isDestroyed) return;
+        this.onSelectionCallbacks = this.onSelectionCallbacks.filter(cb => cb !== callback);
+    }
+
+    public getCurrentSelection(): SelectionState | null {
+        return this.isDestroyed ? null : this.currentSelection;
+    }
+
+    public hasSelection(): boolean {
+        return !this.isDestroyed && this.currentSelection !== null;
+    }
+
+    // --- Event Handling & Detection ---
+
+    private initSelectionDetection(): void {
         if (this.isDetectionInitialized) return;
 
         this.eventManager.addEventHandlers([
             {
                 target: document,
-                event: 'mouseup',
-                handler: this.manageSelectionChange.bind(this),
+                event: EVENTS.MOUSEUP,
+                handler: this.handleSelectionChange.bind(this),
             },
             {
                 target: document,
                 event: EVENTS.KEYDOWN,
-                handler: this.createSelectionKeyEventHandler() as EventListener,
+                handler: this.createKeyboardSelectionHandler() as EventListener,
             },
         ]);
 
@@ -80,35 +76,29 @@ export class SelectionManager {
         logger.debug('Selection event handlers registered');
     }
 
-    /** Creates keyboard handler for Shift+Arrow selection detection. */
-    private createSelectionKeyEventHandler(): (event: KeyboardEvent) => void {
+    private createKeyboardSelectionHandler(): (event: KeyboardEvent) => void {
         return (event: KeyboardEvent) => {
             if (this.isDestroyed) return;
-
-            const isSelectionKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key);
+            const isArrowKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key);
             const hasModifier = event.shiftKey || event.ctrlKey || event.metaKey;
-
-            if (isSelectionKey && hasModifier) {
-                setTimeout(() => this.manageSelectionChange(), 10);
+            if (isArrowKey && hasModifier) {
+                setTimeout(() => this.handleSelectionChange(), 10);
             }
         };
     }
 
-    /** Processes selection changes from mouse or keyboard events. */
-    private manageSelectionChange(): void {
+    private handleSelectionChange(): void {
         if (this.isDestroyed) return;
-
         try {
             const selection = getValidSelection();
             if (!selection) {
                 this.currentSelection = null;
                 return;
             }
-
-            const newSelection = this.processSelection(selection);
+            const newSelection = this.analyzeSelection(selection);
             if (newSelection && newSelection.selectionId !== this.currentSelection?.selectionId) {
                 this.currentSelection = newSelection;
-                this.notifySelectionCallbacks(newSelection);
+                this.notifyCallbacks(newSelection);
                 logger.debug('New selection processed:', newSelection.textModel);
             }
         } catch (error) {
@@ -116,8 +106,12 @@ export class SelectionManager {
         }
     }
 
-    /** Converts DOM Selection to SelectionState with rich text analysis. */
-    private processSelection(selection: Selection): SelectionState | null {
+    // --- Selection Analysis & Model Creation ---
+
+    /**
+     * Returns a SelectionState if the selection is valid, otherwise null.
+     */
+    private analyzeSelection(selection: Selection): SelectionState | null {
         try {
             const range = selection.getRangeAt(0);
             const selectionRect = range.getBoundingClientRect();
@@ -141,7 +135,6 @@ export class SelectionManager {
         }
     }
 
-    /** Creates TextModel with formatting analysis and page context. */
     private createTextModel(selection: Selection, range: Range): TextModel {
         const analyzer = new TextSelectionAnalyzer();
         const currentTab = {
@@ -153,12 +146,12 @@ export class SelectionManager {
         return new TextModel(selection.toString().trim(), analyzer.getFormattedSelection(range), currentTab);
     }
 
-    /** Generates unique ID for selection duplicate detection. */
+    // --- Utilities ---
+
     private generateSelectionId(textContent: string): string {
         return `selection_${this.simpleHash(textContent)}`;
     }
 
-    /** Fast hash function for selection IDs. */
     private simpleHash(str: string): string {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -169,8 +162,7 @@ export class SelectionManager {
         return Math.abs(hash).toString(36);
     }
 
-    /** Safely notifies all selection callbacks with error isolation. */
-    private notifySelectionCallbacks(state: SelectionState): void {
+    private notifyCallbacks(state: SelectionState): void {
         this.onSelectionCallbacks.forEach(callback => {
             try {
                 callback(state);
