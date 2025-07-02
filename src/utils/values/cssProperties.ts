@@ -22,11 +22,6 @@ export const CSS_PROPS = {
 export const BOLD_FONT_WEIGHT_THRESHOLD = 600;
 
 /**
- * Essential style properties to preserve.
- */
-export const ESSENTIAL_STYLE_PROPS = ['color', 'background-color', 'font-weight', 'font-style', 'text-decoration'];
-
-/**
  * Regex pattern for extracting essential style properties.
  */
 export const ESSENTIAL_STYLES_PATTERN = /(color|background-color|font-weight|font-style|text-decoration):[^;]+/g;

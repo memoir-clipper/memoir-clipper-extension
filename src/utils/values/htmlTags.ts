@@ -86,32 +86,6 @@ export const QUOTE_TAGS: Set<string> = new Set([TAGS.BLOCKQUOTE, TAGS.QUOTE]);
 export const LIST_TAGS: Set<string> = new Set([TAGS.UL, TAGS.OL]);
 export const TABLE_CELL_TAGS: Set<string> = new Set([TAGS.TD, TAGS.TH]);
 
-export const BLOCK_ELEMENTS: Set<string> = new Set([
-    TAGS.PARAGRAPH,
-    TAGS.DIV,
-    TAGS.H1,
-    TAGS.H2,
-    TAGS.H3,
-    TAGS.H4,
-    TAGS.H5,
-    TAGS.H6,
-    TAGS.LI,
-    TAGS.TR,
-    TAGS.BR,
-]);
-
-export const MAJOR_BLOCK_ELEMENTS = new Set([
-    TAGS.PARAGRAPH,
-    TAGS.DIV,
-    TAGS.H1,
-    TAGS.H2,
-    TAGS.H3,
-    TAGS.H4,
-    TAGS.H5,
-    TAGS.H6,
-    TAGS.TABLE,
-]);
-
 /**
  * Checks if a tag is a heading (h1-h6).
  * @param tag - The tag name to check.
