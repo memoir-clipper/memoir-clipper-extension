@@ -10,7 +10,7 @@ import { LinkModel } from '@/models/linkModel';
 import { PageModel } from '@/models/pageModel';
 import { ACTION_GET_SELECTED_TEXT } from '@/utils/values/actions';
 import { ExtensionMessage } from '@/models/extensionMessage';
-import { ExtensionResponse } from '@/models/extensionReponse';
+import { ExtensionResponse } from '@/models/extensionResponse';
 
 // --- Context Menu Handlers ---
 

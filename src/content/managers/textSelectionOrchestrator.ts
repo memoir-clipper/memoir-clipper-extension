@@ -6,7 +6,7 @@ import { ShortcutManager } from '@/content/managers/shortcutManager';
 import { SelectionManager } from '@/content/managers//selectionManager';
 import { ID_SHORTCUT_SHOW_MENU } from '@/utils/values/ids';
 import type { ExtensionMessage } from '@/models/extensionMessage';
-import { ExtensionResponse } from '@/models/extensionReponse';
+import { ExtensionResponse } from '@/models/extensionResponse';
 import { KEYS } from '@/utils/values/enums';
 
 export class TextSelectionOrchestrator {
