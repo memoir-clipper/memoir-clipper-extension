@@ -1,33 +1,29 @@
 import type { TextModel } from '@/models/textModel';
-import type { MenuPosition } from '@/utils/types';
-import { MENU_CONFIG, EVENTS } from '@/utils/constants';
+import type { InlineToolbarPosition } from '@/utils/values/types';
 import { EventManager } from '@/models/eventManager';
-import { MenuHideReason } from '@/utils/enums';
-import { logger } from '@/utils/logger';
-import { ContextMenuRenderer } from '@/content/managers/contextMenuRenderer';
+import { MenuHideReason, EVENTS } from '@/utils/values/enums';
+import { logger } from '@/utils/helpers/logger';
+import type { InlineToolbarInstance } from '@/content/managers/inlineToolbarFactory';
+// eslint-disable-next-line no-duplicate-imports
+import { InlineToolbarFactory, UI_OPTIONS } from '@/content/managers/inlineToolbarFactory';
 import { MenuPositionCalculator } from '@/content/helpers/positionCalculator';
-import { CLASS_CONTEXT_MENU_VISIBLE } from '@/utils/ids';
 
 /**
  * Manages context menu lifecycle - creation, positioning, visibility, and interactions.
  * Handles all user dismissal patterns (ESC, click outside, scroll, resize).
  */
 export class ContextMenuManager {
-    private readonly menuRenderer = new ContextMenuRenderer();
+    private menuRenderer: InlineToolbarInstance | null = null;
     private readonly eventManager = new EventManager();
-
     private currentTextModel: TextModel | null = null;
     private menuElement: HTMLElement | null = null;
     private cachedMenuRect: DOMRect | null = null;
     private isVisible = false;
     private autoHideTimer: number | null = null;
     private isDestroyed = false;
-
     private readonly onHideCallbacks: Array<(reason: MenuHideReason) => void> = [];
 
-    constructor() {
-        this.setupEventListeners();
-    }
+    // --- Public API ---
 
     /** Creates and displays menu for given text selection. */
     public render(textModel: TextModel, selectionRect: DOMRect): void {
@@ -35,6 +31,8 @@ export class ContextMenuManager {
             logger.warn('Cannot render menu: ContextMenuManager is destroyed');
             return;
         }
+
+        logger.debug('ContextMenuManager: render called');
 
         try {
             this.hide(MenuHideReason.MANUAL);
@@ -49,12 +47,12 @@ export class ContextMenuManager {
 
     /** Hides menu with specified reason and triggers callbacks. */
     public hide(reason: MenuHideReason = MenuHideReason.MANUAL): void {
-        if (this.isDestroyed || !this.menuElement) return;
+        if (this.isDestroyed || !this.menuElement || !this.menuRenderer) return;
 
         try {
             this.clearAutoHideTimer();
             this.isVisible = false;
-            this.menuRenderer.hideMenu(this.menuElement, () => {
+            this.menuRenderer.hide(() => {
                 this.cleanup();
                 this.notifyHideCallbacks(reason);
             });
@@ -103,29 +101,37 @@ export class ContextMenuManager {
             this.clearAutoHideTimer();
             this.eventManager.cleanup();
             this.onHideCallbacks.length = 0;
-            this.menuRenderer.cleanup();
+            this.menuRenderer?.cleanup();
+            this.menuRenderer = null;
             logger.debug('ContextMenuManager destroyed successfully');
         } catch (error) {
             logger.error('Error during ContextMenuManager destruction:', error);
         }
     }
 
+    // --- Menu Creation & Positioning ---
+
     /** Creates menu element and adds interaction handlers. */
     private createMenu(textModel: TextModel): void {
         if (this.isDestroyed) return;
 
+        logger.debug('ContextMenuManager: createMenu called');
+
         this.currentTextModel = textModel;
-        this.menuElement = this.menuRenderer.createMenuWithInteractions(textModel, action =>
+        this.menuRenderer = InlineToolbarFactory.createWithInteractions(textModel, action =>
             this.handleMenuAction(action),
         );
+        this.menuElement = this.menuRenderer.getElement();
 
         document.body.appendChild(this.menuElement);
         this.cachedMenuRect = this.menuElement.getBoundingClientRect();
+
+        logger.debug('ContextMenuManager: Menu created with element class', this.menuElement.className);
     }
 
     /** Positions menu optimally and shows with animation. */
     private positionAndShow(selectionRect: DOMRect): void {
-        if (this.isDestroyed || !this.menuElement || !this.cachedMenuRect) {
+        if (this.isDestroyed || !this.menuElement || !this.cachedMenuRect || !this.menuRenderer) {
             throw new Error('Menu element not ready for positioning');
         }
 
@@ -137,7 +143,7 @@ export class ContextMenuManager {
     }
 
     /** Applies position coordinates to menu element. */
-    private applyPosition(position: MenuPosition): void {
+    private applyPosition(position: InlineToolbarPosition): void {
         if (!this.menuElement) return;
         this.menuElement.style.left = `${position.x}px`;
         this.menuElement.style.top = `${position.y}px`;
@@ -145,21 +151,30 @@ export class ContextMenuManager {
 
     /** Shows menu with CSS animation and sets up auto-hide. */
     private showWithAnimation(): void {
-        if (!this.menuElement || this.isDestroyed) return;
+        if (!this.menuElement || this.isDestroyed || !this.menuRenderer) return;
 
         this.isVisible = true;
         this.setupAutoHideTimer();
 
         requestAnimationFrame(() => {
-            if (this.menuElement && !this.isDestroyed) {
-                this.menuElement.classList.add(CLASS_CONTEXT_MENU_VISIBLE);
+            if (this.menuElement && !this.isDestroyed && this.menuRenderer) {
+                this.menuRenderer.show();
             }
         });
     }
 
+    // --- Menu Interaction ---
+
     /** Handles menu item clicks and executes corresponding actions. */
     private handleMenuAction(action: string): void {
         logger.debug('Menu action triggered:', action);
+        // Extend here for actual action handling if needed.
+    }
+
+    // --- Event Handling ---
+
+    constructor() {
+        this.setupEventListeners();
     }
 
     /** Sets up all event listeners for menu dismissal. */
@@ -220,16 +235,18 @@ export class ContextMenuManager {
         }
     }
 
+    // --- Auto-hide Logic ---
+
     /** Sets up automatic menu hiding after configured delay. */
     private setupAutoHideTimer(): void {
-        if (!MENU_CONFIG.VISIBILITY.ENABLE_AUTO_HIDE) return;
+        if (!UI_OPTIONS.VISIBILITY.ENABLE_AUTO_HIDE) return;
 
         this.clearAutoHideTimer();
         this.autoHideTimer = window.setTimeout(() => {
             if (this.isVisible && !this.isHovered()) {
                 this.hide(MenuHideReason.AUTO_HIDE);
             }
-        }, MENU_CONFIG.VISIBILITY.AUTO_HIDE_DELAY_MS);
+        }, UI_OPTIONS.VISIBILITY.AUTO_HIDE_DELAY_MS);
     }
 
     /** Clears auto-hide timer to prevent memory leaks. */
@@ -239,6 +256,8 @@ export class ContextMenuManager {
             this.autoHideTimer = null;
         }
     }
+
+    // --- Cleanup & Callbacks ---
 
     /** Removes menu from DOM and resets state. */
     private cleanup(): void {
