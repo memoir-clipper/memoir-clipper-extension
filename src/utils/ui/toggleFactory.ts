@@ -109,7 +109,7 @@ export class ToggleInstance extends BaseInstance {
 
     private createButton(): HTMLElement {
         const button = DOM_UTILS.createElement(TAGS.BUTTON, CLASS_TOGGLE_BUTTON);
-        button.setAttribute(ATTRS.SWITCH, ATTRS.SWITCH);
+        button.setAttribute(ATTRS.ROLE, ATTRS.SWITCH);
         return button;
     }
 
