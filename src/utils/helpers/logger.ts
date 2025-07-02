@@ -1,8 +1,9 @@
-import { TAG, LOG_ENABLED, MINIMUM_LOG_LEVEL } from './constants';
-import { LogLevel } from './enums';
+import { TAG, LOG_ENABLED, MINIMUM_LOG_LEVEL } from '../values/constants';
+import { LogLevel } from '../values/enums';
 
 /**
- * Logger utility for consistent application logging
+ * Logger utility for consistent application logging.
+ * Supports log levels, grouping, and performance timing.
  */
 class Logger {
     private readonly isEnabled: boolean;
@@ -26,25 +27,25 @@ class Logger {
         this.isEnabled = LOG_ENABLED;
     }
 
-    // --- CORE LOGGING METHODS ---
+    // --- Core Logging Methods ---
 
-    public debug(message: string, ...args: any[]): void {
+    public debug(message: string, ...args: unknown[]): void {
         this.log(LogLevel.DEBUG, message, ...args);
     }
 
-    public info(message: string, ...args: any[]): void {
+    public info(message: string, ...args: unknown[]): void {
         this.log(LogLevel.INFO, message, ...args);
     }
 
-    public warn(message: string, ...args: any[]): void {
+    public warn(message: string, ...args: unknown[]): void {
         this.log(LogLevel.WARN, message, ...args);
     }
 
-    public error(message: string, ...args: any[]): void {
+    public error(message: string, ...args: unknown[]): void {
         this.log(LogLevel.ERROR, message, ...args);
     }
 
-    // --- GROUP LOGGING METHODS ---
+    // --- Group Logging Methods ---
 
     public group(label: string): void {
         if (this.isEnabled) {
@@ -58,7 +59,7 @@ class Logger {
         }
     }
 
-    // --- PERFORMANCE LOGGING METHODS ---
+    // --- Performance Logging Methods ---
 
     public time(label: string): void {
         if (this.isEnabled) {
@@ -72,9 +73,9 @@ class Logger {
         }
     }
 
-    // --- HELPER METHODS ---
+    // --- Helper Methods ---
 
-    private log(level: LogLevel, message: string, ...args: any[]): void {
+    private log(level: LogLevel, message: string, ...args: unknown[]): void {
         if (!this.shouldLog(level)) return;
 
         const formattedMessage = this.formatMessage(level, message);
@@ -91,23 +92,19 @@ class Logger {
             case LogLevel.ERROR:
                 console.error(formattedMessage, ...args);
                 break;
+            default:
+                console.log(formattedMessage, ...args);
         }
     }
 
     private shouldLog(level: LogLevel): boolean {
-        return (
-            this.isEnabled &&
-            this.logLevelPriority[level] >= this.logLevelPriority[MINIMUM_LOG_LEVEL]
-        );
+        return this.isEnabled && this.logLevelPriority[level] >= this.logLevelPriority[MINIMUM_LOG_LEVEL];
     }
 
     private getTimestamp(): string {
         const now = new Date();
-
-        // Format: HH:MM:SS.mmm
         const time = now.toTimeString().split(' ')[0];
         const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
-
         return `${time}.${milliseconds}`;
     }
 
@@ -121,5 +118,7 @@ class Logger {
     }
 }
 
-// Export a singleton instance
+/**
+ * Singleton logger instance for application-wide use.
+ */
 export const logger = new Logger();
