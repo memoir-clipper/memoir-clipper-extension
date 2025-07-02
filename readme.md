@@ -132,7 +132,7 @@ models/
     linkModel.ts
     pageModel.ts
     extensionMessage.ts
-    extensionReponse.ts
+    extensionResponse.ts
     eventManager.ts
 popup/
     index.html
