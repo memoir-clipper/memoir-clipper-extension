@@ -1,5 +1,5 @@
 /**
- * Constants for HTML tag names to avoid string literals throughout the code
+ * HTML tag name constants to avoid string literals throughout the codebase.
  */
 export const TAGS = {
     // Text formatting
@@ -54,33 +54,39 @@ export const TAGS = {
     TEXTAREA: 'textarea',
     BUTTON: 'button',
     SELECT: 'select',
-};
 
-// These selectors are used to exclude certain elements from text selection
-export const TEXT_SELECTION_EXCLUSIONS = [
-    `${TAGS.INPUT}`,
-    `${TAGS.TEXTAREA}`,
-    `[contenteditable="true"]`,
-    `${TAGS.BUTTON}`,
-    `${TAGS.IMG}`,
-    `${TAGS.SELECT}`,
-    `[role="button"]`,
+    STYLE: 'style',
+} as const;
+
+/**
+ * CSS selectors for elements to exclude from text selection.
+ */
+export const TEXT_SELECTION_EXCLUSIONS: string[] = [
+    TAGS.INPUT,
+    TAGS.TEXTAREA,
+    '[contenteditable="true"]',
+    TAGS.BUTTON,
+    TAGS.IMG,
+    TAGS.SELECT,
+    '[role="button"]',
 ];
 
-// Common tag groups
-export const TEXT_FORMATTING_TAGS = {
+/**
+ * Common tag groups for formatting and semantic checks.
+ */
+export const TEXT_FORMATTING_TAGS: Record<string, Set<string>> = {
     BOLD: new Set([TAGS.STRONG, TAGS.BOLD]),
     ITALIC: new Set([TAGS.EMPHASIS, TAGS.ITALIC]),
     UNDERLINE: new Set([TAGS.UNDERLINE, TAGS.INS]),
     STRIKETHROUGH: new Set([TAGS.STRIKETHROUGH, TAGS.STRIKE, TAGS.DEL]),
 };
 
-export const CODE_TAGS = new Set([TAGS.CODE, TAGS.PRE]);
-export const QUOTE_TAGS = new Set([TAGS.BLOCKQUOTE, TAGS.QUOTE]);
-export const LIST_TAGS = new Set([TAGS.UL, TAGS.OL]);
-export const TABLE_CELL_TAGS = new Set([TAGS.TD, TAGS.TH]);
+export const CODE_TAGS: Set<string> = new Set([TAGS.CODE, TAGS.PRE]);
+export const QUOTE_TAGS: Set<string> = new Set([TAGS.BLOCKQUOTE, TAGS.QUOTE]);
+export const LIST_TAGS: Set<string> = new Set([TAGS.UL, TAGS.OL]);
+export const TABLE_CELL_TAGS: Set<string> = new Set([TAGS.TD, TAGS.TH]);
 
-export const BLOCK_ELEMENTS = new Set([
+export const BLOCK_ELEMENTS: Set<string> = new Set([
     TAGS.PARAGRAPH,
     TAGS.DIV,
     TAGS.H1,
@@ -106,10 +112,20 @@ export const MAJOR_BLOCK_ELEMENTS = new Set([
     TAGS.TABLE,
 ]);
 
-// Helper function to check if a tag is a heading
-export const isHeadingTag = (tag: string): boolean => /^h[1-6]$/.test(tag);
+/**
+ * Checks if a tag is a heading (h1-h6).
+ * @param tag - The tag name to check.
+ * @returns True if the tag is a heading, false otherwise.
+ */
+export function isHeadingTag(tag: string): boolean {
+    return /^h[1-6]$/.test(tag);
+}
 
-// Helper function to get heading level from tag
-export const getHeadingLevel = (tag: string): number => {
-    return isHeadingTag(tag) ? parseInt(tag.substring(1)) : 0;
-};
+/**
+ * Gets the heading level from a heading tag (h1-h6).
+ * @param tag - The tag name.
+ * @returns The heading level (1-6), or 0 if not a heading.
+ */
+export function getHeadingLevel(tag: string): number {
+    return isHeadingTag(tag) ? parseInt(tag.substring(1), 10) : 0;
+}

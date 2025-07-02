@@ -1,12 +1,12 @@
 /**
- * Constants for HTML attribute names
+ * HTML attribute name constants to avoid string literals throughout the codebase.
  */
 export const ATTRS = {
     // Common attributes
     HREF: 'href',
     SRC: 'src',
     ALT: 'alt',
-    TITLE: 'title',
+    TOOLTIP: 'title',
     CLASS: 'class',
     STYLE: 'style',
     ID: 'id',
@@ -16,7 +16,16 @@ export const ATTRS = {
 
     // Accessibility and roles
     ROLE: 'role',
+    TOOLBAR: 'toolbar',
+    COMBOBOX: 'combobox',
+    LISTBOX: 'listbox',
+    OPTION: 'option',
+    SWITCH: 'switch',
     ARIA_LABEL: 'aria-label',
+    ARIA_HASPOPUP: 'aria-haspopup',
+    ARIA_MULTISELECTABLE: 'aria-multiselectable',
+    ARIA_CHECKED: 'aria-checked',
+    ARIA_EXPANDED: 'aria-expanded',
 
     // Content editing
     CONTENTEDITABLE: 'contenteditable',
@@ -44,17 +53,31 @@ export const ATTRS = {
     DATA_TABLE_ROWS: 'data-table-rows',
     DATA_TABLE_COLS: 'data-table-cols',
     DATA_TABLE_HAS_HEADER: 'data-table-has-header',
-};
+    DATA_ID: 'data-id',
+    DATA_SHORTCUT: 'data-shortcut',
+    DATA_ACTION: 'data-action',
 
-// Groups of attributes
-export const LINK_ATTRS = [ATTRS.HREF, ATTRS.TARGET, ATTRS.TITLE, ATTRS.REL];
-export const IMG_ATTRS = [ATTRS.SRC, ATTRS.ALT, ATTRS.TITLE];
+    // Miscellaneous
+    TYPE: 'type',
+    PLACEHOLDER: 'placeholder',
+    TABINDEX: 'tabindex',
+} as const;
 
-export const TEXT_SELECTION_ESSENTIAL_ATTRS = [
+/**
+ * Attribute groups for common HTML elements.
+ */
+export const LINK_ATTRS = [ATTRS.HREF, ATTRS.TARGET, ATTRS.TOOLTIP, ATTRS.REL];
+
+export const IMG_ATTRS = [ATTRS.SRC, ATTRS.ALT, ATTRS.TOOLTIP];
+
+/**
+ * Essential attributes to preserve during text selection.
+ */
+export const TEXT_SELECTION_ESSENTIAL_ATTRS: string[] = [
     ATTRS.HREF,
     ATTRS.SRC,
     ATTRS.ALT,
-    ATTRS.TITLE,
+    ATTRS.TOOLTIP,
     ATTRS.START,
     ATTRS.TARGET,
 ];
