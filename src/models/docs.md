@@ -28,7 +28,7 @@ The `models/` package defines all core data models and messaging structures used
   Defines the structure for messages sent between extension components (background, content, popup, options).  
   Includes static factory methods and serialization helpers.
 
-- **extensionReponse.ts**  
+- **extensionResponse.ts**  
   Defines the structure for responses to extension messages, supporting success/error states, data payloads, and request tracking.
 
 - **eventManager.ts**  
