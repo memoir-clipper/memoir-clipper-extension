@@ -2,7 +2,7 @@ import { ACTION_GET_SELECTED_TEXT } from '@/utils/values/actions';
 import { logger } from '@/utils/helpers/logger';
 import type { SelectionState } from '@/utils/values/types';
 import { ContextMenuManager } from '@/content/managers/inlineToolbarManager';
-import { ShortcutManager } from '@/content/managers//shortcutManager';
+import { ShortcutManager } from '@/content/managers/shortcutManager';
 import { SelectionManager } from '@/content/managers//selectionManager';
 import { ID_SHORTCUT_SHOW_MENU } from '@/utils/values/ids';
 import type { ExtensionMessage } from '@/models/extensionMessage';
