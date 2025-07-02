@@ -1,7 +1,7 @@
 import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
-import { EVENTS, KEYS, MINUS_ONE, TRUE, FALSE } from '@/utils/values/constants';
+import { EVENTS, MINUS_ONE, TRUE, FALSE } from '@/utils/values/constants';
 import { BaseFactory, BaseInstance } from './baseFactory';
 import type { DropdownOption, DropdownConfig, DropdownSelection, DropdownVariant } from './uiConfig';
 import {
@@ -25,6 +25,7 @@ import {
 } from '../values/ids';
 import { DropdownStyles } from '@/styles/dropdownStyles';
 import { logger } from '../helpers/logger';
+import { KEYS } from '../values/enums';
 
 // --- DropdownFactory ---
 
