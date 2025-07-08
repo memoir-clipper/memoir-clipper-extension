@@ -1,18 +1,16 @@
 import type { InlineToolbarPosition } from '@/utils/values/types';
 
-export class MenuPositionCalculator {
+export class ToolbarPositioningUtil {
     private static readonly GAP = 5;
     private static readonly MARGIN = 10;
 
     // --- Public API ---
 
-    /**
-     * Calculates the optimal position for the context menu.
-     */
-    public static calculatePosition(menuRect: DOMRect, selectionRect: DOMRect): InlineToolbarPosition {
+    /** Calculates the optimal position for the context toolbar. */
+    public static calculatePosition(toolbarRect: DOMRect, selectionRect: DOMRect): InlineToolbarPosition {
         const viewport = this.getViewportInfo();
-        const x = this.calculateHorizontalPosition(menuRect, selectionRect, viewport);
-        const y = this.calculateVerticalPosition(menuRect, selectionRect, viewport);
+        const x = this.calculateHorizontalPosition(toolbarRect, selectionRect, viewport);
+        const y = this.calculateVerticalPosition(toolbarRect, selectionRect, viewport);
 
         return {
             x: x + viewport.scrollX,
@@ -34,26 +32,26 @@ export class MenuPositionCalculator {
     // --- Horizontal Positioning ---
 
     private static calculateHorizontalPosition(
-        menuRect: DOMRect,
+        toolbarRect: DOMRect,
         selectionRect: DOMRect,
         viewport: { width: number; scrollX: number },
     ): number {
-        const centeredX = selectionRect.left + selectionRect.width / 2 - menuRect.width / 2;
-        return Math.max(this.MARGIN, Math.min(viewport.width - menuRect.width - this.MARGIN, centeredX));
+        const centeredX = selectionRect.left + selectionRect.width / 2 - toolbarRect.width / 2;
+        return Math.max(this.MARGIN, Math.min(viewport.width - toolbarRect.width - this.MARGIN, centeredX));
     }
 
     // --- Vertical Positioning ---
 
     private static calculateVerticalPosition(
-        menuRect: DOMRect,
+        toolbarRect: DOMRect,
         selectionRect: DOMRect,
         viewport: { height: number; scrollY: number },
     ): number {
-        const abovePosition = selectionRect.top - menuRect.height - this.GAP;
+        const abovePosition = selectionRect.top - toolbarRect.height - this.GAP;
         const belowPosition = selectionRect.bottom + this.GAP;
 
         if (this.canFitAbove(abovePosition)) return abovePosition;
-        if (this.canFitBelow(belowPosition, menuRect.height, viewport.height)) return belowPosition;
+        if (this.canFitBelow(belowPosition, toolbarRect.height, viewport.height)) return belowPosition;
 
         return this.getBestFitPosition(selectionRect, abovePosition, belowPosition, viewport.height);
     }
@@ -62,13 +60,11 @@ export class MenuPositionCalculator {
         return abovePosition >= 0;
     }
 
-    private static canFitBelow(belowPosition: number, menuHeight: number, viewportHeight: number): boolean {
-        return belowPosition + menuHeight <= viewportHeight;
+    private static canFitBelow(belowPosition: number, toolbarHeight: number, viewportHeight: number): boolean {
+        return belowPosition + toolbarHeight <= viewportHeight;
     }
 
-    /**
-     * Chooses the best fit position if the menu can't fully fit above or below.
-     */
+    /** Chooses the best fit position if the toolbar can't fully fit above or below. */
     private static getBestFitPosition(
         selectionRect: DOMRect,
         abovePosition: number,
