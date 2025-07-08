@@ -1,5 +1,5 @@
 import { logger } from '@/utils/helpers/logger';
-import { TextSelectionOrchestrator } from './managers/textSelectionOrchestrator';
+import { SelectionOrchestratorManager } from './managers/selectionOrchestratorManager';
 import { injectTailwind } from '@/styles/tailwindInjector';
 
 /**
@@ -10,7 +10,7 @@ function initializeContentScript(): void {
 
     try {
         injectTailwind();
-        TextSelectionOrchestrator.init();
+        SelectionOrchestratorManager.init();
         logger.info('Content script initialized successfully');
     } catch (error) {
         logger.error('Error during content script initialization:', error);
