@@ -16,7 +16,6 @@ export const CLASS_INLINE_TOOLBAR_VISIBLE = 'memoir-inline-toolbar-visible';
 export const CLASS_INLINE_TOOLBAR_PRIMARY = 'memoir-inline-toolbar-primary';
 export const CLASS_INLINE_TOOLBAR_DANGER = 'memoir-inline-toolbar-danger';
 export const ID_STYLE_INLINE_TOOLBAR = 'memoir-inline-toolbar-styles';
-export const ID_SHORTCUT_SHOW_MENU = 'showMenu';
 
 /**
  * Dropdown-related class names (specific to inline toolbar).
@@ -37,6 +36,11 @@ export const CLASS_DROPDOWN_OPTION_CONTENT = 'memoir-dropdown-option-content';
 export const CLASS_DROPDOWN_EMPTY = 'memoir-dropdown-empty';
 export const CLASS_DROPDOWN_SEARCH = 'memoir-dropdown-search';
 export const CLASS_DROPDOWN_SEARCH_INPUT = 'memoir-dropdown-search-input';
+export const CLASS_DROPDOWN_SELECTION_TAGS_SELECTED = 'memoir-dropdown-selection--tags-selected';
+export const CLASS_DROPDOWN_COLOR_INDICATOR = 'memoir-dropdown-color-indicator';
+export const CLASS_DROPDOWN_COLOR_INDICATOR_LARGE = 'dropdown-color-indicator--large';
+export const CLASS_DROPDOWN_OPTION_FLEX = 'memoir-dropdown-option-flex';
+export const CLASS_DROPDOWN_OPTION_LABEL_FLEX = 'memoir-dropdown-option-label';
 export const ID_DROPDOWN_STYLES = 'memoir-dropdown-styles';
 
 /**
@@ -94,3 +98,5 @@ export const CLASS_INLINE_TOOLBAR_SHORTCUT = 'memoir-inline-toolbar-shortcut';
 export const CLASS_INLINE_TOOLBAR_DIVIDER = 'memoir-inline-toolbar-menu-divider';
 export const CLASS_INLINE_TOOLBAR_OPTION_MAIN = 'memoir-inline-toolbar-option-main';
 export const CLASS_INLINE_TOOLBAR_OPTION_DESC = 'memoir-inline-toolbar-option-description';
+
+export const ID_SHORTCUT_SHOW_TOOLBAR = 'showToolbarShortcut';

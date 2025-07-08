@@ -44,13 +44,14 @@ export enum ListType {
 /**
  * Enum for the types of reasons for hiding a menu.
  */
-export enum MenuHideReason {
+export enum ToolbarHideReason {
     MANUAL = 'manual',
     CLICK_OUTSIDE = 'clickOutside',
     ESCAPE_KEY = 'escapeKey',
     SCROLL = 'scroll',
     RESIZE = 'resize',
-    AUTO_HIDE = 'autoHide',
+    SAVE = 'save',
+    NO_SELECTION = 'noSelection',
 }
 
 /**
@@ -70,6 +71,8 @@ export enum KEYS {
     TAB = 'Tab',
     ENTER = 'Enter',
     ESCAPE = 'Escape',
+    ARROW_LEFT = 'ArrowLeft',
+    ARROW_RIGHT = 'ArrowRight',
     ARROW_DOWN = 'ArrowDown',
     ARROW_UP = 'ArrowUp',
     B = 'B',
@@ -86,6 +89,7 @@ export enum KEYS {
  * Enum for the different types of events that can be handled in the application.
  */
 export enum EVENTS {
+    KEYUP = 'keyup',
     KEYDOWN = 'keydown',
     MOUSEUP = 'mouseup',
     MOUSEDOWN = 'mousedown',

@@ -11,7 +11,7 @@ export interface DropdownConfig {
     searchable?: boolean;
     customInputPlaceholder?: string;
     keyboardShortcuts?: Record<string, string>; // key -> optionId
-    renderButton?: (config: DropdownConfig, selection: DropdownSelection) => string;
+    buttonTemplateCallback?: (config: DropdownConfig, selection: DropdownSelection) => string;
     onSelect?: (selection: DropdownSelection) => void;
     onCustomCreate?: (value: string) => DropdownOption | null;
 }
@@ -63,11 +63,11 @@ export interface ToggleConfig {
 /**
  * Configuration for the inline toolbar, exposing only essential callbacks.
  */
-export type InlineToolbarConfig = {
-    readonly onSave?: (data: ToolbarSelectedData) => void;
-    readonly onCopy?: (html: string) => void;
-    readonly onClose?: () => void;
-};
+export interface InlineToolbarConfig {
+    onSave?: (data: ToolbarSelectedData) => void;
+    onClose?: () => void;
+    onCopy?: (data: string) => void;
+}
 
 /**
  * Data collected from user interactions with the toolbar.
