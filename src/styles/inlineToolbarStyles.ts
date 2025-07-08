@@ -21,17 +21,19 @@ export class InlineToolbarStyles {
                 font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 font-size: 14px;
                 transform-origin: top center;
-                animation: memoir-menu-enter 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                opacity: 0;
+                transform: translateY(-4px) scale(0.98);
+                pointer-events: none;
+                transition: opacity 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                           transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             }
-            @keyframes memoir-menu-enter {
-                from { opacity: 0; transform: translateY(-4px) scale(0.98); }
-                to { opacity: 1; transform: translateY(0) scale(1); }
-            }
+            
             .${CLASS_INLINE_TOOLBAR}.${CLASS_INLINE_TOOLBAR_VISIBLE} {
                 opacity: 1;
-                transform: scale(1);
+                transform: translateY(0) scale(1);
                 pointer-events: auto;
             }
+            
             .${CLASS_INLINE_TOOLBAR_SHORTCUT} {
                 padding: 2px 5px;
                 border-radius: 4px;

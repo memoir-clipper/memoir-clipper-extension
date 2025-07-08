@@ -159,6 +159,39 @@ export class DropdownStyles {
                 color: #6b7280;
                 font-style: italic;
             }
+            
+            /* Toolbar-specific dropdown styles */
+            .${CLASS_DROPDOWN_SELECTION}--tags-selected {
+                color: #3b82f6;
+                font-weight: 500;
+            }
+            
+            .dropdown-color-indicator {
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                margin-right: 8px;
+                flex-shrink: 0;
+            }
+            
+            .dropdown-color-indicator--large {
+                width: 16px;
+                height: 16px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                margin-right: 6px;
+            }
+            
+            .dropdown-option-flex {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                flex: 1;
+            }
+            
+            .dropdown-option-label {
+                flex: 1;
+            }
         `;
     }
 }
