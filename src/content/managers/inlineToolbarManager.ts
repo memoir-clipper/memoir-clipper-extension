@@ -1,189 +1,112 @@
-import type { TextModel } from '@/models/textModel';
 import type { InlineToolbarPosition } from '@/utils/values/types';
 import { EventManager } from '@/models/eventManager';
-import { MenuHideReason, EVENTS } from '@/utils/values/enums';
+import { EVENTS, ToolbarHideReason } from '@/utils/values/enums';
 import { logger } from '@/utils/helpers/logger';
-import type { InlineToolbarInstance } from '@/content/managers/inlineToolbarFactory';
+import type { InlineToolbarInstance } from '@/utils/ui/inlineToolbarFactory';
 // eslint-disable-next-line no-duplicate-imports
-import { InlineToolbarFactory, UI_OPTIONS } from '@/content/managers/inlineToolbarFactory';
-import { MenuPositionCalculator } from '@/content/helpers/positionCalculator';
+import { InlineToolbarFactory } from '@/utils/ui/inlineToolbarFactory';
+import { ToolbarPositioningUtil } from '@/content/helpers/positionCalculator';
+import type { ToolbarSelectedData } from '@/utils/ui/uiConfig';
+import { CLASS_INLINE_TOOLBAR_VISIBLE } from '@/utils/values/ids';
 
-/**
- * Manages context menu lifecycle - creation, positioning, visibility, and interactions.
- * Handles all user dismissal patterns (ESC, click outside, scroll, resize).
- */
-export class ContextMenuManager {
-    private menuRenderer: InlineToolbarInstance | null = null;
-    private readonly eventManager = new EventManager();
-    private currentTextModel: TextModel | null = null;
-    private menuElement: HTMLElement | null = null;
-    private cachedMenuRect: DOMRect | null = null;
-    private isVisible = false;
-    private autoHideTimer: number | null = null;
+export class InlineToolbarManager {
+    private static readonly TAG = '[InlineToolbarManager]';
+
+    private toolbarInstance: InlineToolbarInstance | null = null;
     private isDestroyed = false;
-    private readonly onHideCallbacks: Array<(reason: MenuHideReason) => void> = [];
+    private readonly eventManager = new EventManager();
+    private toolbarContainer: HTMLElement | null = null;
+
+    constructor() {
+        this.setupGlobalEventListeners();
+        this.createPersistentToolbar();
+    }
 
     // --- Public API ---
 
-    /** Creates and displays menu for given text selection. */
-    public render(textModel: TextModel, selectionRect: DOMRect): void {
-        if (this.isDestroyed) {
-            logger.warn('Cannot render menu: ContextMenuManager is destroyed');
+    /** Shows toolbar at optimal position for given selection. */
+    public show(selectionRect: DOMRect): void {
+        if (this.isDestroyed || !this.toolbarInstance) {
+            logger.warn(
+                InlineToolbarManager.TAG,
+                'Cannot show toolbar: Manager is destroyed or toolbar not initialized',
+            );
             return;
         }
 
-        logger.debug('ContextMenuManager: render called');
-
-        try {
-            this.hide(MenuHideReason.MANUAL);
-            this.createMenu(textModel);
-            this.positionAndShow(selectionRect);
-            logger.debug('Context menu rendered successfully');
-        } catch (error) {
-            logger.error('Failed to render context menu:', error);
-            this.cleanup();
-        }
+        this.positionAndShow(selectionRect);
+        logger.debug(InlineToolbarManager.TAG, 'Toolbar shown');
     }
 
-    /** Hides menu with specified reason and triggers callbacks. */
-    public hide(reason: MenuHideReason = MenuHideReason.MANUAL): void {
-        if (this.isDestroyed || !this.menuElement || !this.menuRenderer) return;
+    /** Hides toolbar. */
+    public hide(reason: ToolbarHideReason): void {
+        if (this.isDestroyed || !this.toolbarInstance) return;
 
-        try {
-            this.clearAutoHideTimer();
-            this.isVisible = false;
-            this.menuRenderer.hide(() => {
-                this.cleanup();
-                this.notifyHideCallbacks(reason);
-            });
-        } catch (error) {
-            logger.error('Error hiding menu:', error);
-            this.forceCleanup();
-        }
+        this.toolbarInstance.hide();
+        logger.debug(InlineToolbarManager.TAG, 'Toolbar hidden:', reason);
     }
 
-    /** Checks if element is contained within menu. */
-    public containsElement(element: Element | null): boolean {
-        if (this.isDestroyed) return false;
-        return element ? (this.menuElement?.contains(element) ?? false) : false;
-    }
-
-    /** Checks if menu is currently hovered by user. */
-    public isHovered(): boolean {
-        if (this.isDestroyed || !this.menuElement) return false;
-        return this.menuElement.matches(':hover');
-    }
-
-    /** Returns whether menu is currently visible. */
-    public isMenuVisible(): boolean {
-        return !this.isDestroyed && this.isVisible;
-    }
-
-    /** Returns current text model associated with menu. */
-    public getCurrentTextModel(): TextModel | null {
-        return this.isDestroyed ? null : this.currentTextModel;
-    }
-
-    /** Registers callback for menu hide events. */
-    public onHide(callback: (reason: MenuHideReason) => void): void {
-        if (!this.isDestroyed) {
-            this.onHideCallbacks.push(callback);
-        }
-    }
-
-    /** Cleans up all resources and event listeners. */
+    /** Destroys the toolbar and cleans up resources. */
     public destroy(): void {
         if (this.isDestroyed) return;
         this.isDestroyed = true;
 
-        try {
-            this.hide(MenuHideReason.MANUAL);
-            this.clearAutoHideTimer();
-            this.eventManager.cleanup();
-            this.onHideCallbacks.length = 0;
-            this.menuRenderer?.cleanup();
-            this.menuRenderer = null;
-            logger.debug('ContextMenuManager destroyed successfully');
-        } catch (error) {
-            logger.error('Error during ContextMenuManager destruction:', error);
-        }
+        this.hide(ToolbarHideReason.MANUAL);
+        this.eventManager.cleanup();
+        this.toolbarInstance?.cleanup();
+        this.toolbarInstance = null;
+        this.toolbarContainer = null;
+        logger.debug(InlineToolbarManager.TAG, 'destroyed successfully');
     }
 
-    // --- Menu Creation & Positioning ---
+    // --- State Queries ---
 
-    /** Creates menu element and adds interaction handlers. */
-    private createMenu(textModel: TextModel): void {
+    /** Returns true if the toolbar contains the given element. */
+    public containsElement(element: Element | null): boolean {
+        if (this.isDestroyed || !element) return false;
+
+        return this.toolbarContainer?.contains(element) ?? false;
+    }
+
+    /** Returns true if the toolbar is currently hovered. */
+    public isHovered(): boolean {
+        if (this.isDestroyed || !this.toolbarContainer) return false;
+
+        return this.toolbarContainer.matches(':hover');
+    }
+
+    /** Returns true if the toolbar is visible. */
+    public isVisible(): boolean {
+        if (this.isDestroyed || !this.toolbarContainer) return false;
+
+        return this.toolbarContainer.classList.contains(CLASS_INLINE_TOOLBAR_VISIBLE);
+    }
+
+    // --- Toolbar Lifecycle & Initialization ---
+
+    /** Creates toolbar once and keeps it in memory. */
+    private createPersistentToolbar(): void {
         if (this.isDestroyed) return;
 
-        logger.debug('ContextMenuManager: createMenu called');
-
-        this.currentTextModel = textModel;
-        this.menuRenderer = InlineToolbarFactory.createWithInteractions(textModel, action =>
-            this.handleMenuAction(action),
-        );
-        this.menuElement = this.menuRenderer.getElement();
-
-        document.body.appendChild(this.menuElement);
-        this.cachedMenuRect = this.menuElement.getBoundingClientRect();
-
-        logger.debug('ContextMenuManager: Menu created with element class', this.menuElement.className);
-    }
-
-    /** Positions menu optimally and shows with animation. */
-    private positionAndShow(selectionRect: DOMRect): void {
-        if (this.isDestroyed || !this.menuElement || !this.cachedMenuRect || !this.menuRenderer) {
-            throw new Error('Menu element not ready for positioning');
-        }
-
-        const optimalPosition = MenuPositionCalculator.calculatePosition(this.cachedMenuRect, selectionRect);
-
-        this.applyPosition(optimalPosition);
-        this.showWithAnimation();
-        logger.debug('Menu positioned at:', optimalPosition);
-    }
-
-    /** Applies position coordinates to menu element. */
-    private applyPosition(position: InlineToolbarPosition): void {
-        if (!this.menuElement) return;
-        this.menuElement.style.left = `${position.x}px`;
-        this.menuElement.style.top = `${position.y}px`;
-    }
-
-    /** Shows menu with CSS animation and sets up auto-hide. */
-    private showWithAnimation(): void {
-        if (!this.menuElement || this.isDestroyed || !this.menuRenderer) return;
-
-        this.isVisible = true;
-        this.setupAutoHideTimer();
-
-        requestAnimationFrame(() => {
-            if (this.menuElement && !this.isDestroyed && this.menuRenderer) {
-                this.menuRenderer.show();
-            }
+        this.toolbarInstance = InlineToolbarFactory.create({
+            onSave: data => this.handleSave(data),
+            onCopy: html => this.handleCopy(html),
+            onClose: () => this.hide(ToolbarHideReason.MANUAL),
         });
+
+        this.toolbarContainer = this.toolbarInstance.getElement();
+        document.body.appendChild(this.toolbarContainer as HTMLElement);
+
+        logger.debug(InlineToolbarManager.TAG, 'Persistent toolbar created');
     }
 
-    // --- Menu Interaction ---
-
-    /** Handles menu item clicks and executes corresponding actions. */
-    private handleMenuAction(action: string): void {
-        logger.debug('Menu action triggered:', action);
-        // Extend here for actual action handling if needed.
-    }
-
-    // --- Event Handling ---
-
-    constructor() {
-        this.setupEventListeners();
-    }
-
-    /** Sets up all event listeners for menu dismissal. */
-    private setupEventListeners(): void {
+    /** Sets up global event listeners for toolbar interactions. */
+    private setupGlobalEventListeners(): void {
         this.eventManager.addEventHandlers([
             {
                 target: document,
                 event: EVENTS.KEYDOWN,
-                handler: this.handleEscapeKey.bind(this) as EventListener,
+                handler: this.handleGlobalEscapeKey.bind(this) as EventListener,
             },
             {
                 target: document,
@@ -193,105 +116,75 @@ export class ContextMenuManager {
             {
                 target: document,
                 event: EVENTS.SCROLL,
-                handler: this.handleScroll.bind(this),
+                handler: () => this.isVisible() && this.hide(ToolbarHideReason.SCROLL),
                 options: { capture: true, passive: true },
             },
             {
                 target: window,
                 event: EVENTS.RESIZE,
-                handler: this.handleResize.bind(this),
+                handler: () => this.isVisible() && this.hide(ToolbarHideReason.RESIZE),
                 options: { passive: true },
             },
         ]);
     }
 
-    /** Handles ESC key to close menu. */
-    private handleEscapeKey(e: KeyboardEvent): void {
-        if (e.key === 'Escape' && this.isVisible) {
-            this.hide(MenuHideReason.ESCAPE_KEY);
-            e.preventDefault();
+    // --- Toolbar Positioning ---
+
+    /** Calculates and applies optimal position, then shows the toolbar. */
+    private positionAndShow(selectionRect: DOMRect): void {
+        if (this.isDestroyed || !this.toolbarContainer || !this.toolbarInstance) {
+            logger.error(InlineToolbarManager.TAG, 'Toolbar element not ready for positioning');
+            return;
+        }
+
+        const toolbarRect = this.toolbarContainer.getBoundingClientRect();
+        const optimalPosition = ToolbarPositioningUtil.calculatePosition(toolbarRect, selectionRect);
+
+        this.applyPosition(optimalPosition);
+        this.toolbarInstance.show();
+        logger.debug(InlineToolbarManager.TAG, 'Toolbar positioned at:', optimalPosition);
+    }
+
+    /** Applies the given position to the toolbar container. */
+    private applyPosition(position: InlineToolbarPosition): void {
+        this.toolbarContainer!.style.left = `${position.x}px`;
+        this.toolbarContainer!.style.top = `${position.y}px`;
+    }
+
+    // --- Toolbar Event Handlers ---
+
+    /** Handles Escape key to close toolbar or dropdowns. */
+    private handleGlobalEscapeKey(e: KeyboardEvent): void {
+        if (e.key === 'Escape' && this.isVisible()) {
+            const hasOpenDropdowns = this.toolbarInstance?.hasOpenDropdowns();
+
+            if (hasOpenDropdowns) {
+                this.toolbarInstance?.handleEscapeKey();
+            } else {
+                this.hide(ToolbarHideReason.ESCAPE_KEY);
+                e.preventDefault();
+            }
         }
     }
 
-    /** Handles clicks outside menu to close it. */
+    /** Hides toolbar if click is outside the toolbar. */
     private handleClickOutside(e: MouseEvent): void {
         const target = e.target as Element | null;
-        if (this.isVisible && target && !this.containsElement(target)) {
-            this.hide(MenuHideReason.CLICK_OUTSIDE);
+        if (this.isVisible() && target && !this.containsElement(target)) {
+            this.hide(ToolbarHideReason.CLICK_OUTSIDE);
         }
     }
 
-    /** Handles scroll events to close menu. */
-    private handleScroll(): void {
-        if (this.isVisible) {
-            this.hide(MenuHideReason.SCROLL);
-        }
+    /** Handles save action from the toolbar. */
+    private handleSave(data: ToolbarSelectedData): void {
+        logger.debug('Save action:', data);
+        // TODO: Implement save logic here
+        this.hide(ToolbarHideReason.SAVE);
     }
 
-    /** Handles window resize to close menu. */
-    private handleResize(): void {
-        if (this.isVisible) {
-            this.hide(MenuHideReason.RESIZE);
-        }
-    }
-
-    // --- Auto-hide Logic ---
-
-    /** Sets up automatic menu hiding after configured delay. */
-    private setupAutoHideTimer(): void {
-        if (!UI_OPTIONS.VISIBILITY.ENABLE_AUTO_HIDE) return;
-
-        this.clearAutoHideTimer();
-        this.autoHideTimer = window.setTimeout(() => {
-            if (this.isVisible && !this.isHovered()) {
-                this.hide(MenuHideReason.AUTO_HIDE);
-            }
-        }, UI_OPTIONS.VISIBILITY.AUTO_HIDE_DELAY_MS);
-    }
-
-    /** Clears auto-hide timer to prevent memory leaks. */
-    private clearAutoHideTimer(): void {
-        if (this.autoHideTimer !== null) {
-            clearTimeout(this.autoHideTimer);
-            this.autoHideTimer = null;
-        }
-    }
-
-    // --- Cleanup & Callbacks ---
-
-    /** Removes menu from DOM and resets state. */
-    private cleanup(): void {
-        if (this.menuElement?.parentNode) {
-            try {
-                this.menuElement.remove();
-            } catch (error) {
-                logger.warn('Error removing menu element during cleanup:', error);
-            }
-        }
-
-        this.menuElement = null;
-        this.cachedMenuRect = null;
-        this.currentTextModel = null;
-    }
-
-    /** Forces cleanup when normal cleanup fails. */
-    private forceCleanup(): void {
-        try {
-            this.cleanup();
-            this.notifyHideCallbacks(MenuHideReason.MANUAL);
-        } catch (error) {
-            logger.error('Error during force cleanup:', error);
-        }
-    }
-
-    /** Notifies all hide callbacks with error isolation. */
-    private notifyHideCallbacks(reason: MenuHideReason): void {
-        this.onHideCallbacks.forEach(callback => {
-            try {
-                callback(reason);
-            } catch (error) {
-                logger.error('Error in hide callback:', error);
-            }
-        });
+    /** Handles copy action from the toolbar. */
+    private handleCopy(html: string): void {
+        logger.debug('Copy action:', html);
+        // TODO: Implement copy logic here
     }
 }
