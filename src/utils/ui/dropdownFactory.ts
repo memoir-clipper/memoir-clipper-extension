@@ -25,7 +25,6 @@ import {
     ID_DROPDOWN_STYLES,
 } from '../values/ids';
 import { DropdownStyles } from '@/styles/dropdownStyles';
-import { logger } from '../helpers/logger';
 import { KEYS } from '../values/enums';
 
 // --- DropdownFactory ---
@@ -69,6 +68,7 @@ export class DropdownFactory extends BaseFactory {
 // --- DropdownInstance ---
 
 export class DropdownInstance extends BaseInstance {
+    // --- State ---
     private button: HTMLElement;
     private menu: HTMLElement;
     private searchInput?: HTMLInputElement;
@@ -82,8 +82,6 @@ export class DropdownInstance extends BaseInstance {
         private options: DropdownOption[],
         private config: DropdownConfig,
     ) {
-        logger.debug('DropdownInstance: Constructor called', { config });
-
         super();
         this.filteredOptions = [...options];
         this.container = this.createContainer();
@@ -95,18 +93,11 @@ export class DropdownInstance extends BaseInstance {
 
         this.setupEvents();
         this.updateButtonContent();
-
-        logger.debug('DropdownInstance: Constructor completed', {
-            containerClass: this.container.className,
-            buttonClass: this.button.className,
-            menuClass: this.menu.className,
-            hasSearchInput: !!this.searchInput,
-        });
     }
 
     // --- Public API ---
 
-    public getElement(): HTMLElement {
+    override getElement(): HTMLElement | null {
         return this.container;
     }
 
@@ -137,6 +128,7 @@ export class DropdownInstance extends BaseInstance {
         }
     }
 
+    /** Sets the selected option(s) by id and updates the UI. */
     public setSelection(optionIds: string | string[]): void {
         this.selectedOptions.clear();
         const ids = Array.isArray(optionIds) ? optionIds : [optionIds];
@@ -156,6 +148,24 @@ export class DropdownInstance extends BaseInstance {
         this.updateMenuItems();
     }
 
+    /** Replaces all dropdown options and updates selection/filter state. */
+    public setOptions(options: DropdownOption[]): void {
+        this.options = [...options]; // Defensive copy
+        this.applyFilter(); // Reapply current filter
+        this.updateMenuItems(); // Update the DOM
+
+        // Validate current selection - remove invalid selections
+        const validIds = new Set(options.map(opt => opt.id));
+        const invalidSelections = Array.from(this.selectedOptions).filter(id => !validIds.has(id));
+        invalidSelections.forEach(id => {
+            this.selectedOptions.delete(id);
+        });
+
+        // Update button content to reflect any selection changes
+        this.updateButtonContent();
+    }
+
+    /** Adds a single option to the dropdown and updates the menu. */
     public addOption(option: DropdownOption): void {
         this.options.push(option);
         this.applyFilter();
@@ -164,17 +174,24 @@ export class DropdownInstance extends BaseInstance {
 
     public close(): void {
         if (!this.isOpen) return;
+
         this.isOpen = false;
-        this.container.classList.remove(CLASS_DROPDOWN_OPEN);
+        this.container?.classList.remove(CLASS_DROPDOWN_OPEN);
         this.button.setAttribute(ATTRS.ARIA_EXPANDED, FALSE);
+
         if (this.searchInput) {
             this.searchInput.value = '';
             this.searchTerm = '';
             this.applyFilter();
         }
+
+        // Return focus to button after closing
+        requestAnimationFrame(() => {
+            this.button.focus();
+        });
     }
 
-    // --- DOM Creation ---
+    // --- DOM Creation & Rendering ---
 
     private createContainer(): HTMLElement {
         const container = DOM_UTILS.createElement(TAGS.DIV, CLASS_DROPDOWN_CONTAINER);
@@ -230,12 +247,10 @@ export class DropdownInstance extends BaseInstance {
         });
     }
 
-    // --- Rendering ---
-
     private updateButtonContent(): void {
         const selection = this.getSelection();
-        if (this.config.renderButton) {
-            this.button.innerHTML = this.config.renderButton(this.config, selection);
+        if (this.config.buttonTemplateCallback) {
+            this.button.innerHTML = this.config.buttonTemplateCallback(this.config, selection);
             return;
         }
         let content = '';
@@ -255,6 +270,7 @@ export class DropdownInstance extends BaseInstance {
         this.button.innerHTML = content;
     }
 
+    /** Removes all menu items and re-renders the filtered options. */
     private updateMenuItems(): void {
         const removableElements = this.menu.querySelectorAll(`.${CLASS_DROPDOWN_OPTION}, .${CLASS_DROPDOWN_EMPTY}`);
         removableElements.forEach(element => element.remove());
@@ -300,8 +316,9 @@ export class DropdownInstance extends BaseInstance {
         return content;
     }
 
-    // --- Selection and Filtering ---
+    // --- Selection, Filtering, and Custom Option ---
 
+    /** Handles selection logic for single/multi-select and invokes callbacks. */
     private selectOption(option: DropdownOption): void {
         const { multiSelect, closeOnSelect = true, onSelect } = this.config;
 
@@ -324,6 +341,7 @@ export class DropdownInstance extends BaseInstance {
         onSelect?.(this.getSelection());
     }
 
+    /** Filters options based on the current search term. */
     private applyFilter(): void {
         const term = this.searchTerm.trim().toLowerCase();
         if (!term) {
@@ -357,6 +375,7 @@ export class DropdownInstance extends BaseInstance {
         this.updateMenuItems();
     }
 
+    /** Handles creation and selection of a custom option from the search term. */
     private handleCustomCreate(): void {
         const { allowCustom, onCustomCreate } = this.config;
         const searchTerm = this.searchTerm.trim();
@@ -375,12 +394,12 @@ export class DropdownInstance extends BaseInstance {
         this.applyFilter();
     }
 
-    // --- Dropdown Open/Close ---
+    // --- Dropdown Open/Close & Event Handling ---
 
     private open(): void {
         if (this.isOpen) return;
         this.isOpen = true;
-        this.container.classList.add(CLASS_DROPDOWN_OPEN);
+        this.container?.classList.add(CLASS_DROPDOWN_OPEN);
         this.button.setAttribute(ATTRS.ARIA_EXPANDED, TRUE);
         if (this.searchInput) {
             requestAnimationFrame(() => {
@@ -389,6 +408,7 @@ export class DropdownInstance extends BaseInstance {
         }
     }
 
+    /** Toggles the dropdown open/close state. */
     private toggleDropdown(): void {
         if (this.isOpen) {
             this.close();
@@ -397,8 +417,7 @@ export class DropdownInstance extends BaseInstance {
         }
     }
 
-    // --- Event Handling ---
-
+    /** Sets up all event handlers for dropdown interaction. */
     private setupEvents(): void {
         // Toggle dropdown on button click
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
@@ -436,7 +455,7 @@ export class DropdownInstance extends BaseInstance {
 
         // Close dropdown when clicking outside
         this.eventManager.addEventHandler(document, EVENTS.MOUSEDOWN, (e: Event) => {
-            if (!this.container.contains(e.target as Node) && this.isOpen) {
+            if (!this.container?.contains(e.target as Node) && this.isOpen) {
                 this.close();
             }
         });

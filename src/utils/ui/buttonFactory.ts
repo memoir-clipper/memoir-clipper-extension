@@ -15,7 +15,6 @@ import {
 } from '@/utils/values/ids';
 import { ButtonStyles } from '@/styles/buttonStyles';
 import type { ButtonConfig, ButtonVariant } from './uiConfig';
-import { logger } from '../helpers/logger';
 
 // --- ButtonFactory ---
 
@@ -29,9 +28,7 @@ export class ButtonFactory extends BaseFactory {
         label: (label: string) => `<span class="${CLASS_BUTTON_LABEL}">${label}</span>`,
     };
 
-    /**
-     * Creates a new button instance and injects required styles.
-     */
+    /** Creates a new button instance and injects required styles. */
     public static create(config: ButtonConfig, variant: ButtonVariant = 'default'): ButtonInstance {
         const styles = ButtonFactory.getStylesForVariant(variant, this.stylesMap, ButtonStyles.defaultButtonStyle);
         this.ensureStyles(ID_BUTTON_STYLES, styles);
@@ -43,27 +40,20 @@ export class ButtonFactory extends BaseFactory {
 
 export class ButtonInstance extends BaseInstance {
     private button: HTMLElement;
+    protected container: HTMLElement;
 
     constructor(private config: ButtonConfig) {
-        logger.debug('ButtonInstance: Constructor called', { config });
-
         super();
         this.container = this.createContainer();
         this.button = this.createButton();
-
         this.container.appendChild(this.button);
         this.setupEvents();
-
-        logger.debug('ButtonInstance: Constructor completed', {
-            containerClass: this.container.className,
-            buttonClass: this.button.className,
-        });
     }
 
     // --- Public API ---
 
     /** Returns the root element for this button. */
-    public getElement(): HTMLElement {
+    override getElement(): HTMLElement | null {
         return this.container;
     }
 
@@ -73,8 +63,9 @@ export class ButtonInstance extends BaseInstance {
         this.config.onClick?.();
     }
 
-    // --- DOM Creation ---
+    // --- DOM Creation & UI Updates ---
 
+    /** Creates the container element and sets tooltip if provided. */
     private createContainer(): HTMLElement {
         const container = DOM_UTILS.createElement(TAGS.DIV, CLASS_BUTTON_CONTAINER);
         if (this.config.tooltip) {
@@ -83,6 +74,7 @@ export class ButtonInstance extends BaseInstance {
         return container;
     }
 
+    /** Creates the button element with icon and label. */
     private createButton(): HTMLElement {
         const classes = [CLASS_BUTTON_BASE, this.config.primary ? CLASS_BUTTON_PRIMARY : CLASS_BUTTON_SECONDARY];
         const button = DOM_UTILS.createElement(TAGS.BUTTON, classes.join(' '));
@@ -97,8 +89,7 @@ export class ButtonInstance extends BaseInstance {
         return button;
     }
 
-    // --- UI Updates ---
-
+    /** Animates the button click by toggling a CSS class. */
     private animateClick(): void {
         this.button.classList.add(CLASS_BUTTON_CLICKED);
         setTimeout(() => {
@@ -108,6 +99,7 @@ export class ButtonInstance extends BaseInstance {
 
     // --- Event Handling ---
 
+    /** Sets up the click event handler for the button. */
     private setupEvents(): void {
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, () => {
             this.click();
