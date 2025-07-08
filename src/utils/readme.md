@@ -33,25 +33,9 @@ The `utils/` package provides shared utility functions, constants, enums, type d
 
 - **ui/**  
   Factories and base logic for UI components:
+  - `baseFactory.ts`: Shared base logic for UI factories (style injection, lifecycle).
   - `buttonFactory.ts`: Factory for creating styled button elements.
   - `dropdownFactory.ts`: Factory for dropdown UI components.
   - `toggleFactory.ts`: Factory for toggle switches.
-  - `baseFactory.ts`: Shared base logic for UI factories.
-  - `uiConfig.ts`: Configuration options for UI components.
-
----
-
-## Key Responsibilities
-
-- **Utility Functions:**  
-  Provide reusable helpers for DOM operations, logging, environment detection, and selection validation.
-
-- **Constants & Types:**  
-  Centralize all enums, constants, IDs, and type definitions for consistency and type safety.
-
-- **UI Factories:**  
-  Enable modular, isolated creation of UI components (buttons, dropdowns, toggles) with consistent styling and behavior.
-
----
-
-For more details, see inline comments in each file or refer to the main project README.
+  - `inlineToolbarFactory.ts`: Factory for the inline/contextual toolbar UI.
+  - `uiConfig.ts`: Configuration options and types
