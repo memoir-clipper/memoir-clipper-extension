@@ -58,8 +58,10 @@ export class SelectionOrchestratorManager {
 
     private initializeManagers(): void {
         this.shortcutManager = ShortcutManager.getInstance();
-        this.selectionManager = SelectionManager.getInstance();
         this.toolbarManager = new InlineToolbarManager();
+        this.selectionManager = SelectionManager.getInstance();
+
+        this.selectionManager.setToolbarManager(this.toolbarManager);
     }
 
     /** Registers callback to show/hide toolbar based on selection state. */
