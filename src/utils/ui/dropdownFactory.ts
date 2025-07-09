@@ -429,13 +429,15 @@ export class DropdownInstance extends BaseInstance {
         // Keyboard navigation for button
         this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
             const keyEvent = e as KeyboardEvent;
-            if (keyEvent.key === KEYS.ENTER) {
+            if (keyEvent.key === KEYS.ENTER || keyEvent.key === KEYS.SPACE) {
                 e.preventDefault();
                 this.toggleDropdown();
             } else if (keyEvent.key === KEYS.ESCAPE && this.isOpen) {
                 e.preventDefault();
                 this.close();
             }
+
+            // Handle keyboard shortcuts
             if (this.config.keyboardShortcuts) {
                 const optionId = this.config.keyboardShortcuts[keyEvent.key.toUpperCase()];
                 if (optionId) {
@@ -453,7 +455,7 @@ export class DropdownInstance extends BaseInstance {
             e.stopPropagation();
         });
 
-        // Close dropdown when clicking outside
+        // Close dropdown when clicking outside (handled by toolbar manager)
         this.eventManager.addEventHandler(document, EVENTS.MOUSEDOWN, (e: Event) => {
             if (!this.container?.contains(e.target as Node) && this.isOpen) {
                 this.close();

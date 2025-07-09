@@ -1,6 +1,4 @@
-/**
- * Enum representing different levels of logging.
- */
+/** Enum representing different levels of logging. */
 export enum LogLevel {
     DEBUG = 'DEBUG',
     INFO = 'INFO',
@@ -8,9 +6,7 @@ export enum LogLevel {
     ERROR = 'ERROR',
 }
 
-/**
- * Enum for the different types of content supported by the application.
- */
+/** Enum for the different types of content supported by the application. */
 export enum ContentType {
     IMAGE = 'image',
     LINK = 'link',
@@ -18,9 +14,7 @@ export enum ContentType {
     TEXT = 'text',
 }
 
-/**
- * Enum for the different types of text content elements.
- */
+/** Enum for the different types of text content elements. */
 export enum TextContentType {
     PARAGRAPH = 'paragraph',
     HEADING = 'heading',
@@ -32,18 +26,14 @@ export enum TextContentType {
     UNKNOWN = '',
 }
 
-/**
- * Enum for the different types of lists.
- */
+/** Enum for the different types of lists. */
 export enum ListType {
     ORDERED = 'ordered',
     UNORDERED = 'unordered',
     NONE = '',
 }
 
-/**
- * Enum for the types of reasons for hiding a menu.
- */
+/** Enum for the types of reasons for hiding a menu. */
 export enum ToolbarHideReason {
     MANUAL = 'manual',
     CLICK_OUTSIDE = 'clickOutside',
@@ -54,9 +44,7 @@ export enum ToolbarHideReason {
     NO_SELECTION = 'noSelection',
 }
 
-/**
- * Enum for available context types used within the application.
- */
+/** Enum for available context types used within the application. */
 export enum CONTEXTS {
     IMAGE = 'image',
     LINK = 'link',
@@ -64,12 +52,11 @@ export enum CONTEXTS {
     SELECTION = 'selection',
 }
 
-/**
- * Enum for the different types of keys that can be used in keyboard shortcuts.
- */
+/** Enum for the different types of keys that can be used in keyboard shortcuts. */
 export enum KEYS {
     TAB = 'Tab',
     ENTER = 'Enter',
+    SPACE = 'Space',
     ESCAPE = 'Escape',
     ARROW_LEFT = 'ArrowLeft',
     ARROW_RIGHT = 'ArrowRight',
@@ -85,9 +72,7 @@ export enum KEYS {
     G = 'G',
 }
 
-/**
- * Enum for the different types of events that can be handled in the application.
- */
+/** Enum for the different types of events that can be handled in the application. */
 export enum EVENTS {
     KEYUP = 'keyup',
     KEYDOWN = 'keydown',
@@ -98,4 +83,5 @@ export enum EVENTS {
     CLICK = 'click',
     INPUT = 'input',
     CHANGE = 'change',
+    FOCUS = 'focus',
 }

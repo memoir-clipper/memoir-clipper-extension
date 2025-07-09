@@ -1,7 +1,7 @@
 import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
-import { EVENTS } from '@/utils/values/enums';
+import { EVENTS, KEYS } from '@/utils/values/enums';
 import { BaseFactory, BaseInstance } from './baseFactory';
 import {
     CLASS_BUTTON_CONTAINER,
@@ -101,8 +101,17 @@ export class ButtonInstance extends BaseInstance {
 
     /** Sets up the click event handler for the button. */
     private setupEvents(): void {
-        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, () => {
+        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
+            e.preventDefault();
             this.click();
+        });
+
+        this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
+            const keyEvent = e as KeyboardEvent;
+            if (keyEvent.key === KEYS.ENTER || keyEvent.key === KEYS.SPACE) {
+                e.preventDefault();
+                this.click();
+            }
         });
     }
 }
