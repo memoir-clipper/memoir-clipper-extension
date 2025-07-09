@@ -331,11 +331,107 @@ export class InlineToolbarInstance extends BaseInstance {
     /** Registers a component in the toolbar and focus order. */
     private registerComponent(toolbar: HTMLElement, id: string, instance: BaseInstance | null): void {
         if (!instance) return;
+
         const element = instance.getElement();
         if (!element) return;
         this.componentMap.set(id, instance);
         this.focusOrder.push(id);
         toolbar.appendChild(element);
+
+        this.setupMouseFocusSync(element, id);
+    }
+
+    /** Sets up comprehensive focus management for mouse and keyboard interactions. */
+    private setupMouseFocusSync(element: HTMLElement, componentId: string): void {
+        const focusableElement = element.querySelector(TAGS.BUTTON) as HTMLElement;
+        if (!focusableElement) return;
+
+        // FOCUS EVENT: Triggered by any focus source (mouse, keyboard, programmatic)
+        this.eventManager.addEventHandler(focusableElement, 'focus', () => {
+            this.handleFocusChange(componentId);
+        });
+
+        // MOUSEDOWN EVENT: Immediate mouse response
+        this.eventManager.addEventHandler(focusableElement, 'mousedown', (e: Event) => {
+            e.preventDefault();
+            this.handleMouseInteraction(componentId, focusableElement);
+        });
+
+        // BLUR EVENT: Manage dropdown closing
+        this.eventManager.addEventHandler(focusableElement, 'blur', (e: Event) => {
+            this.handleBlurEvent(componentId, e as FocusEvent);
+        });
+    }
+
+    /** Centralized focus change handler for all interaction types. */
+    private handleFocusChange(componentId: string): void {
+        const index = this.focusOrder.indexOf(componentId);
+        if (index !== -1) {
+            this.currentFocusIndex = index;
+        }
+
+        const component = this.componentMap.get(componentId);
+        if (component && 'isOpened' in component) {
+            this.closeOtherDropdowns(componentId);
+        } else {
+            this.closeAllOpenDropdowns();
+        }
+    }
+
+    /** Handles mouse interaction with immediate visual feedback. */
+    private handleMouseInteraction(componentId: string, focusableElement: HTMLElement): void {
+        const index = this.focusOrder.indexOf(componentId);
+        if (index !== -1) {
+            this.currentFocusIndex = index;
+        }
+
+        const component = this.componentMap.get(componentId);
+        if (component && 'isOpened' in component) {
+            this.closeOtherDropdowns(componentId);
+
+            requestAnimationFrame(() => {
+                focusableElement.focus();
+            });
+        } else {
+            this.closeAllOpenDropdowns();
+            focusableElement.focus();
+        }
+    }
+
+    /** Handles blur events to manage dropdown visibility. */
+    private handleBlurEvent(componentId: string, event: FocusEvent): void {
+        const component = this.componentMap.get(componentId);
+        if (!(component && 'isOpened' in component)) return;
+
+        const dropdown = component as DropdownInstance;
+        if (!dropdown.isOpened?.()) return;
+
+        const relatedTarget = event.relatedTarget as Element | null;
+
+        // Don't close if focus is moving within the same dropdown
+        if (relatedTarget && component.getElement()?.contains(relatedTarget)) {
+            return;
+        }
+
+        // Don't close if focus is moving to another toolbar component
+        if (relatedTarget && this.container?.contains(relatedTarget)) {
+            return;
+        }
+
+        // Close dropdown when focus moves outside the component and toolbar
+        setTimeout(() => {
+            if (dropdown.isOpened?.() && !this.isComponentFocused(componentId)) {
+                dropdown.close();
+            }
+        }, 0);
+    }
+
+    /** Checks if any element within a component currently has focus. */
+    private isComponentFocused(componentId: string): boolean {
+        const component = this.componentMap.get(componentId);
+        const element = component?.getElement();
+        const activeElement = document.activeElement;
+        return !!(activeElement && element?.contains(activeElement));
     }
 
     // --- Component Creators ---
@@ -576,18 +672,47 @@ export class InlineToolbarInstance extends BaseInstance {
         return false;
     }
 
-    /** Focuses the component at the given index. */
-    private focus(index: number): void {
-        this.closeAllOpenDropdowns();
+    /** Enhanced focus method with interaction type awareness. */
+    private focus(index: number, viaKeyboard: Boolean = true): void {
         if (index < 0 || index >= this.focusOrder.length) return;
-        this.currentFocusIndex = index;
+
         const componentId = this.focusOrder[index];
-        const component = this.componentMap.get(componentId);
-        const element = component?.getElement();
-        const focusableElement = element?.querySelector('button') as HTMLElement;
-        if (focusableElement) {
-            requestAnimationFrame(() => focusableElement.focus());
-        }
+        const focusableElement = this.componentMap
+            .get(componentId)
+            ?.getElement()
+            ?.querySelector('button') as HTMLElement;
+
+        if (!focusableElement) return;
+
+        this.currentFocusIndex = index;
+        if (viaKeyboard) this.closeAllOpenDropdowns();
+        requestAnimationFrame(() => {
+            focusableElement.focus();
+        });
+    }
+
+    /** Enhanced keyboard navigation with proper focus management. */
+    private navigateFocus(direction: number): void {
+        const total = this.focusOrder.length;
+        if (total === 0) return;
+
+        const newIndex = (this.currentFocusIndex + direction + total) % total;
+        this.focus(newIndex, true);
+    }
+
+    /** Closes all dropdowns except the specified component. */
+    private closeOtherDropdowns(excludeComponentId: string): void {
+        this.dropdownIds.forEach(id => {
+            if (id === excludeComponentId) return;
+
+            const component = this.componentMap.get(id);
+            if (component && 'isOpened' in component && 'close' in component) {
+                const dropdown = component as DropdownInstance;
+                if (dropdown.isOpened?.()) {
+                    dropdown.close();
+                }
+            }
+        });
     }
 
     /** Closes all open dropdowns in the toolbar. */
@@ -601,13 +726,5 @@ export class InlineToolbarInstance extends BaseInstance {
                 }
             }
         });
-    }
-
-    /** Moves focus to the next or previous component. */
-    private navigateFocus(direction: number): void {
-        const total = this.focusOrder.length;
-        if (total === 0) return;
-        const newIndex = (this.currentFocusIndex + direction + total) % total;
-        this.focus(newIndex);
     }
 }

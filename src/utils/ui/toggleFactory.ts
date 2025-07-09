@@ -139,17 +139,27 @@ export class ToggleInstance extends BaseInstance {
 
     /** Sets up event handlers for the toggle button. */
     private setupEvents(): void {
+        // Click handling
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
             e.preventDefault();
             this.toggle();
         });
 
+        // Keyboard interaction
         this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
             const keyEvent = e as KeyboardEvent;
             if (keyEvent.key === KEYS.ENTER || keyEvent.key === KEYS.SPACE) {
                 e.preventDefault();
                 this.toggle();
             }
+        });
+
+        // Handle mouse down for consistent focus behavior
+        this.eventManager.addEventHandler(this.button, EVENTS.MOUSEDOWN, (e: Event) => {
+            e.preventDefault();
+            requestAnimationFrame(() => {
+                this.button.focus();
+            });
         });
     }
 }

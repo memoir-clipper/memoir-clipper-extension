@@ -84,4 +84,5 @@ export enum EVENTS {
     INPUT = 'input',
     CHANGE = 'change',
     FOCUS = 'focus',
+    BLUR = 'blur',
 }

@@ -99,18 +99,22 @@ export class ButtonInstance extends BaseInstance {
 
     // --- Event Handling ---
 
-    /** Sets up the click event handler for the button. */
+    /** Enhanced event setup for natural interaction patterns. */
     private setupEvents(): void {
+        // Click handling with proper event management
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
             e.preventDefault();
             this.click();
+            this.button.blur();
         });
 
+        // Keyboard interaction
         this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
             const keyEvent = e as KeyboardEvent;
             if (keyEvent.key === KEYS.ENTER || keyEvent.key === KEYS.SPACE) {
                 e.preventDefault();
                 this.click();
+                this.button.blur();
             }
         });
     }

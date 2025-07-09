@@ -172,6 +172,7 @@ export class DropdownInstance extends BaseInstance {
         this.updateMenuItems();
     }
 
+    /** Enhanced close method with proper focus restoration. */
     public close(): void {
         if (!this.isOpen) return;
 
@@ -179,13 +180,14 @@ export class DropdownInstance extends BaseInstance {
         this.container?.classList.remove(CLASS_DROPDOWN_OPEN);
         this.button.setAttribute(ATTRS.ARIA_EXPANDED, FALSE);
 
+        // Clear search state
         if (this.searchInput) {
             this.searchInput.value = '';
             this.searchTerm = '';
             this.applyFilter();
         }
 
-        // Return focus to button after closing
+        // Restore focus to button for continued navigation
         requestAnimationFrame(() => {
             this.button.focus();
         });
@@ -396,14 +398,23 @@ export class DropdownInstance extends BaseInstance {
 
     // --- Dropdown Open/Close & Event Handling ---
 
+    /** Enhanced open method with smart focus management. */
     private open(): void {
         if (this.isOpen) return;
+
         this.isOpen = true;
         this.container?.classList.add(CLASS_DROPDOWN_OPEN);
         this.button.setAttribute(ATTRS.ARIA_EXPANDED, TRUE);
-        if (this.searchInput) {
+
+        // Smart focus: search input if available and searchable, otherwise button
+        if (this.searchInput && this.config.searchable) {
             requestAnimationFrame(() => {
                 this.searchInput?.focus();
+            });
+        } else {
+            // Keep focus on button for immediate keyboard navigation
+            requestAnimationFrame(() => {
+                this.button.focus();
             });
         }
     }
@@ -417,24 +428,27 @@ export class DropdownInstance extends BaseInstance {
         }
     }
 
-    /** Sets up all event handlers for dropdown interaction. */
+    /** Enhanced event setup with comprehensive focus management. */
     private setupEvents(): void {
-        // Toggle dropdown on button click
+        // Click toggles the dropdown
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
             e.preventDefault();
             e.stopPropagation();
             this.toggleDropdown();
         });
 
-        // Keyboard navigation for button
+        // Comprehensive keyboard handling
         this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
             const keyEvent = e as KeyboardEvent;
+
             if (keyEvent.key === KEYS.ENTER || keyEvent.key === KEYS.SPACE) {
                 e.preventDefault();
                 this.toggleDropdown();
-            } else if (keyEvent.key === KEYS.ESCAPE && this.isOpen) {
+            } else if (keyEvent.key === KEYS.ESCAPE) {
                 e.preventDefault();
-                this.close();
+                if (this.isOpen) {
+                    this.close();
+                }
             }
 
             // Handle keyboard shortcuts
@@ -450,16 +464,42 @@ export class DropdownInstance extends BaseInstance {
             }
         });
 
-        // Prevent menu click from closing dropdown
+        // Menu interaction handling
         this.eventManager.addEventHandler(this.menu, EVENTS.CLICK, (e: Event) => {
             e.stopPropagation();
         });
 
-        // Close dropdown when clicking outside (handled by toolbar manager)
+        // Search input focus management
+        if (this.searchInput) {
+            this.eventManager.addEventHandler(this.searchInput, 'blur', (e: Event) => {
+                const blurEvent = e as FocusEvent;
+                const relatedTarget = blurEvent.relatedTarget as Element | null;
+
+                // Don't close if focus moves within the dropdown
+                if (relatedTarget && this.container?.contains(relatedTarget)) {
+                    return;
+                }
+
+                // Close dropdown when search input loses focus to outside elements
+                setTimeout(() => {
+                    if (this.isOpen && !this.isDropdownFocused()) {
+                        this.close();
+                    }
+                }, 0);
+            });
+        }
+
+        // Global click outside handler
         this.eventManager.addEventHandler(document, EVENTS.MOUSEDOWN, (e: Event) => {
             if (!this.container?.contains(e.target as Node) && this.isOpen) {
                 this.close();
             }
         });
+    }
+
+    /** Checks if any element within the dropdown currently has focus. */
+    private isDropdownFocused(): boolean {
+        const activeElement = document.activeElement;
+        return !!(activeElement && this.container?.contains(activeElement));
     }
 }
