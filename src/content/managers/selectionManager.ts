@@ -189,7 +189,7 @@ export class SelectionManager {
                 return null;
             }
 
-            const selectionId = this.generateSelectionId(textContent);
+            const selectionId = this.generateSelectionId(textContent, selectionRect);
             const textModel = this.assembleTextModel(selection, range);
 
             return {
@@ -218,8 +218,11 @@ export class SelectionManager {
     // --- Utilities ---
 
     /** Generates a unique selection ID based on text content and timestamp. */
-    private generateSelectionId(textContent: string): string {
-        return `selection_${this.simpleHash(textContent)}`;
+    private generateSelectionId(content: string, rect: DOMRect): string {
+        const baseHash = this.simpleHash(content);
+        const rectHash = this.simpleHash(`${rect.x}-${rect.y}-${rect.width}-${rect.height}`);
+
+        return `sel--${baseHash}-${rectHash}`;
     }
 
     /** Simple hash function for generating IDs from a string. */
