@@ -445,6 +445,8 @@ export class DropdownInstance extends BaseInstance {
             } else if (keyEvent.key === KEYS.ESCAPE) {
                 e.preventDefault();
                 if (this.isOpen) {
+                    e.preventDefault();
+                    e.stopPropagation();
                     this.close();
                 }
             }

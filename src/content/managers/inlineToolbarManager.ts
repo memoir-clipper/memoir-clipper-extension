@@ -1,6 +1,6 @@
 import type { InlineToolbarPosition } from '@/utils/values/types';
 import { EventManager } from '@/models/eventManager';
-import { EVENTS, ToolbarHideReason } from '@/utils/values/enums';
+import { EVENTS, KEYS, ToolbarHideReason } from '@/utils/values/enums';
 import { logger } from '@/utils/helpers/logger';
 import type { InlineToolbarInstance } from '@/utils/ui/inlineToolbarFactory';
 // eslint-disable-next-line no-duplicate-imports
@@ -155,14 +155,17 @@ export class InlineToolbarManager {
 
     /** Handles Escape key to close toolbar or dropdowns. */
     private handleGlobalEscapeKey(e: KeyboardEvent): void {
-        if (e.key === 'Escape' && this.isVisible()) {
+        if (e.key === KEYS.ESCAPE && this.isVisible()) {
             const hasOpenDropdowns = this.toolbarInstance?.hasOpenDropdowns();
 
             if (hasOpenDropdowns) {
-                this.toolbarInstance?.handleEscapeKey();
+                this.toolbarInstance?.closeAllOpenDropdowns();
+                e.preventDefault();
+                e.stopPropagation();
             } else {
                 this.hide(ToolbarHideReason.ESCAPE_KEY);
                 e.preventDefault();
+                e.stopPropagation();
             }
         }
     }

@@ -284,12 +284,6 @@ export class InlineToolbarInstance extends BaseInstance {
         });
     }
 
-    /** Handles Escape key to close all open dropdowns. */
-    public handleEscapeKey(): void {
-        logger.debug(`${InlineToolbarInstance.TAG}: Escape key pressed: ONCE - closing all open dropdowns`);
-        this.closeAllOpenDropdowns();
-    }
-
     /** Cleans up all components and event handlers. */
     public cleanup(): void {
         this.componentMap.forEach(component => {
@@ -711,6 +705,10 @@ export class InlineToolbarInstance extends BaseInstance {
     private handleToolbarKey(e: KeyboardEvent): boolean {
         const { key, shiftKey, ctrlKey } = e;
 
+        if (key === KEYS.ESCAPE) {
+            return false;
+        }
+
         if (key === KEYS.TAB) {
             this.navigateFocus(shiftKey ? -1 : 1);
             return true;
@@ -778,7 +776,7 @@ export class InlineToolbarInstance extends BaseInstance {
     }
 
     /** Closes all open dropdowns in the toolbar. */
-    private closeAllOpenDropdowns(): void {
+    public closeAllOpenDropdowns(): void {
         this.dropdownIds.forEach(id => {
             const component = this.componentMap.get(id);
             if (component && 'isOpened' in component && 'close' in component) {
