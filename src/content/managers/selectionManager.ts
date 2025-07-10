@@ -136,7 +136,14 @@ export class SelectionManager {
     private updateCurrentSelection(): void {
         if (this.isDestroyed) return;
 
+        // Check if the last click was within the toolbar area
         if (this.toolbarManager && this.isLastClickWithinToolbar()) {
+            return;
+        }
+
+        // Check if we're clicking on an existing selection area when toolbar is visible
+        if (this.toolbarManager && this.toolbarManager.isVisible() && this.isClickOnCurrentSelection()) {
+            this.clearCurrentSelection();
             return;
         }
 
@@ -160,12 +167,26 @@ export class SelectionManager {
 
     /** Checks if the last mouse event was within the toolbar area. */
     private isLastClickWithinToolbar(): boolean {
-        const target = document.elementFromPoint(
-            this.lastMouseEvent?.clientX ?? -1,
-            this.lastMouseEvent?.clientY ?? -1,
-        );
+        if (!this.lastMouseEvent) return false;
+
+        const target = document.elementFromPoint(this.lastMouseEvent.clientX, this.lastMouseEvent.clientY);
 
         return target ? this.toolbarManager!.containsElement(target) : false;
+    }
+
+    /** Checks if the click was on the current selection area when toolbar is visible. */
+    private isClickOnCurrentSelection(): boolean {
+        if (!this.lastMouseEvent || !this.currentSelection) return false;
+
+        const { clientX, clientY } = this.lastMouseEvent;
+        const { selectionRect } = this.currentSelection;
+
+        return (
+            clientX >= selectionRect.left &&
+            clientX <= selectionRect.right &&
+            clientY >= selectionRect.top &&
+            clientY <= selectionRect.bottom
+        );
     }
 
     /** Clears the current selection and notifies callbacks. */
@@ -233,7 +254,7 @@ export class SelectionManager {
             hash = (hash << 5) - hash + char;
             hash = hash & hash;
         }
-        return Math.abs(hash).toString(36) + Date.now().toString(36);
+        return Math.abs(hash).toString(36);
     }
 
     /** Executes all registered selection callbacks with the current state, catching errors. */
