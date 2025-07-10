@@ -16,7 +16,6 @@ import {
 } from '@/utils/values/ids';
 import { ToggleStyles } from '@/styles/toggleStyles';
 import type { ToggleConfig, ToggleVariant } from './uiConfig';
-import { logger } from '../helpers/logger';
 
 // --- ToggleFactory ---
 
@@ -27,7 +26,7 @@ export class ToggleFactory extends BaseFactory {
 
     // --- HTML Templates ---
 
-    public static html = {
+    private static html = {
         label: (label: string) => `<span class="${CLASS_TOGGLE_LABEL}">${label}</span>`,
         track: () => `<span class="${CLASS_TOGGLE_TRACK}"><span class="${CLASS_TOGGLE_THUMB}"></span></span>`,
         shortcut: (shortcutKey: string, shortcutModifier?: string) => {
@@ -38,10 +37,17 @@ export class ToggleFactory extends BaseFactory {
 
     // --- Factory Method ---
 
+    /** Creates a new ToggleInstance and ensures styles are injected. */
     public static create(config: ToggleConfig, variant: ToggleVariant = 'default'): ToggleInstance {
         const styles = ToggleFactory.getStylesForVariant(variant, this.stylesMap, ToggleStyles.defaultToggleStyle);
         this.ensureStyles(ID_TOGGLE_STYLES, styles);
         return new ToggleInstance(config);
+    }
+
+    // --- Expose HTML templates for ToggleInstance ---
+
+    public static get htmlTemplates() {
+        return this.html;
     }
 }
 
@@ -51,10 +57,9 @@ export class ToggleInstance extends BaseInstance {
     private button: HTMLElement;
     private isActive: boolean;
     private config: ToggleConfig;
+    private html = ToggleFactory.htmlTemplates;
 
     constructor(config: ToggleConfig) {
-        logger.debug('ToggleInstance: Constructor called', { config });
-
         super();
         this.config = config;
         this.isActive = config.initialState ?? false;
@@ -66,17 +71,12 @@ export class ToggleInstance extends BaseInstance {
 
         this.setupEvents();
         this.updateButton();
-
-        logger.debug('ToggleInstance: Constructor completed', {
-            containerClass: this.container.className,
-            buttonClass: this.button.className,
-        });
     }
 
     // --- Public API ---
 
     /** Returns the root element for this toggle instance. */
-    public getElement(): HTMLElement {
+    override getElement(): HTMLElement | null {
         return this.container;
     }
 
@@ -97,8 +97,9 @@ export class ToggleInstance extends BaseInstance {
         this.config.onChange?.(this.isActive);
     }
 
-    // --- DOM Creation ---
+    // --- DOM Creation & Updates ---
 
+    /** Creates the container element for the toggle. */
     private createContainer(): HTMLElement {
         const container = DOM_UTILS.createElement(TAGS.DIV, CLASS_TOGGLE_CONTAINER);
         if (this.config.tooltip) {
@@ -107,14 +108,14 @@ export class ToggleInstance extends BaseInstance {
         return container;
     }
 
+    /** Creates the button element for the toggle. */
     private createButton(): HTMLElement {
         const button = DOM_UTILS.createElement(TAGS.BUTTON, CLASS_TOGGLE_BUTTON);
         button.setAttribute(ATTRS.ROLE, ATTRS.SWITCH);
         return button;
     }
 
-    // --- UI Updates ---
-
+    /** Updates the button's appearance and content based on state and config. */
     private updateButton(): void {
         if (this.isActive) {
             this.button.classList.add(CLASS_TOGGLE_ACTIVE);
@@ -124,11 +125,11 @@ export class ToggleInstance extends BaseInstance {
 
         this.button.setAttribute(ATTRS.ARIA_CHECKED, this.isActive ? TRUE : FALSE);
 
-        let content = ToggleFactory.html.label(this.config.label);
-        content += ToggleFactory.html.track();
+        let content = this.html.label(this.config.label);
+        content += this.html.track();
 
         if (this.config.shortcutKey) {
-            content += ToggleFactory.html.shortcut(this.config.shortcutKey, this.config.shortcutModifier);
+            content += this.html.shortcut(this.config.shortcutKey, this.config.shortcutModifier);
         }
 
         this.button.innerHTML = content;
@@ -136,6 +137,7 @@ export class ToggleInstance extends BaseInstance {
 
     // --- Event Handling ---
 
+    /** Sets up event handlers for the toggle button. */
     private setupEvents(): void {
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, () => {
             this.toggle();

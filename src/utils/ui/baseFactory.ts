@@ -7,9 +7,7 @@ import { logger } from '@/utils/helpers/logger';
 export abstract class BaseFactory {
     protected static stylesInjected = new Map<string, boolean>();
 
-    /**
-     * Injects a style block with the given ID only once.
-     */
+    /** Injects a style block with the given ID only once. */
     protected static ensureStyles(styleId: string, styles: string): void {
         if (this.stylesInjected.get(styleId)) return;
 
@@ -18,13 +16,9 @@ export abstract class BaseFactory {
         styleSheet.textContent = styles;
         document.head.appendChild(styleSheet);
         this.stylesInjected.set(styleId, true);
-
-        logger.debug('BaseFactory: Styles injected', styleId);
     }
 
-    /**
-     * Returns the style string for a given variant, or the default if not found.
-     */
+    /** Returns the style string for a given variant, or the default if not found. */
     protected static getStylesForVariant<V extends string>(
         variant: V,
         stylesMap: Record<V, string>,
@@ -38,18 +32,26 @@ export abstract class BaseFactory {
 
 export abstract class BaseInstance {
     protected eventManager = new EventManager();
-    protected container!: HTMLElement;
+    protected container: HTMLElement | null = null;
 
     /** Returns the root element for this instance. */
-    public abstract getElement(): HTMLElement;
+    public abstract getElement(): HTMLElement | null;
 
-    /**
-     * Cleans up event listeners and removes the root element from the DOM.
-     */
+    /** Cleans up event listeners and removes the root element from the DOM. */
     public cleanup(): void {
-        this.eventManager.cleanup();
-        if (this.container) {
-            this.container.remove();
+        try {
+            // Remove element from DOM if it exists
+            if (this.container?.parentNode) {
+                this.container.remove();
+            }
+
+            // Cleanup event manager
+            this.eventManager.cleanup();
+
+            // Clear container reference
+            this.container = null;
+        } catch (error) {
+            logger.warn('Error during cleanup:', error);
         }
     }
 }

@@ -12,7 +12,8 @@ This document outlines the primary packages and folders within the `src` directo
 
 - **content/**
     - Contains content scripts injected into web pages.
-    - Responsible for UI orchestration, user selection handling, toolbars, and DOM/content analysis utilities.
+    - Responsible for UI orchestration, user selection handling, toolbars, keyboard shortcuts, and DOM/content analysis utilities.
+    - Includes managers for selection, toolbar, and shortcuts, as well as helpers for DOM and content analysis.
     - **Entry point:** `content/index.ts`
 
 - **models/**
@@ -28,10 +29,10 @@ This document outlines the primary packages and folders within the `src` directo
     - **Entry points:** `options/index.html`, `options/index.ts`
 
 - **styles/**
-    - Contains Tailwind CSS files, style injectors, and isolated CSS for UI components.
+    - Contains Tailwind CSS files, dynamic style injectors, and isolated CSS for UI components (buttons, dropdowns, toolbars, toggles).
 
 - **utils/**
-    - Houses shared utilities, helpers, constants, enums, and UI factories.
+    - Houses shared utilities, helpers, constants, enums, type definitions, and UI factories.
     - **Subfolders:**
         - `helpers/`: Utilities for DOM manipulation, favicon retrieval, logging, environment detection, and selection handling.
         - `values/`: Centralized constants, enums, identifiers, strings, HTML tags/attributes, and types.

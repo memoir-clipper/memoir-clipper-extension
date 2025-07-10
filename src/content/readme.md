@@ -25,11 +25,10 @@ The `content/` package contains all logic that runs as content scripts injected 
 
 - **managers/**  
   Contains orchestrators and managers for UI and user interactions:
-  - `textSelectionOrchestrator.ts`: Singleton that coordinates selection, context menu, and shortcuts.
+  - `selectionOrchestratorManager.ts`: Singleton that coordinates selection, context menu, and shortcuts.
   - `selectionManager.ts`: Detects and manages text selections, notifies listeners.
   - `inlineToolbarManager.ts`: Handles the lifecycle, positioning, and visibility of the inline toolbar/context menu.
   - `shortcutManager.ts`: Registers and handles keyboard shortcuts for actions.
-  - `inlineToolbarFactory.ts`: Factory for creating the inline toolbar UI component.
 
 - **helpers/**  
   Utility modules for content analysis and DOM operations:

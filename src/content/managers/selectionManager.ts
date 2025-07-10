@@ -1,47 +1,65 @@
-import { TextModel } from '@/models/textModel';
-import type { SelectionState, SelectionCallback } from '@/utils/values/types';
-import { EVENTS } from '@/utils/values/enums';
 import { EventManager } from '@/models/eventManager';
-import { logger } from '@/utils/helpers/logger';
+import { TextModel } from '@/models/textModel';
 import { getFaviconUrl } from '@/utils/helpers/getFavicon';
-import { TextSelectionAnalyzer } from '@/content/helpers/textSelectionAnalyzer';
 import { getValidSelection } from '@/utils/helpers/getValidTextSelection';
+import { logger } from '@/utils/helpers/logger';
+import { ARROW_KEYS, TOOLBAR_DELAY_SHORTCUT } from '@/utils/values/constants';
+import type { KEYS } from '@/utils/values/enums';
+// eslint-disable-next-line no-duplicate-imports
+import { EVENTS } from '@/utils/values/enums';
+import type { SelectionState, SelectionCallback } from '@/utils/values/types';
+import { TextSelectionAnalyzer } from '../helpers/textSelectionAnalyzer';
 
 export class SelectionManager {
-    private readonly eventManager = new EventManager();
+    private static readonly TAG = '[SelectionManager]';
+    private static instance: SelectionManager | null = null;
+
+    private isDestroyed = false;
     private isDetectionInitialized = false;
     private currentSelection: SelectionState | null = null;
     private onSelectionCallbacks: SelectionCallback[] = [];
-    private isDestroyed = false;
+    private selectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+    private readonly eventManager = new EventManager();
 
-    // --- Lifecycle ---
+    // --- Singleton & Lifecycle ---
 
-    constructor() {
+    private constructor() {
         this.initSelectionDetection();
+    }
+
+    public static getInstance(): SelectionManager {
+        SelectionManager.instance ??= new SelectionManager();
+        return SelectionManager.instance;
     }
 
     /** Cleans up all resources and event listeners. */
     public destroy(): void {
         if (this.isDestroyed) return;
         this.isDestroyed = true;
+
         try {
+            if (this.selectionDebounceTimer) {
+                clearTimeout(this.selectionDebounceTimer);
+                this.selectionDebounceTimer = null;
+            }
             this.eventManager.cleanup();
             this.onSelectionCallbacks.length = 0;
             this.currentSelection = null;
-            logger.debug('SelectionManager destroyed successfully');
+            SelectionManager.instance = null;
+            logger.debug(`${SelectionManager.TAG} destroyed successfully`);
         } catch (error) {
-            logger.error('Error during SelectionManager destruction:', error);
+            logger.error(`${SelectionManager.TAG} Error during destruction:`, error);
         }
     }
 
-    // --- Public API ---
+    // --- Public API: Selection State & Callbacks ---
 
-    public onSelection(callback: SelectionCallback): void {
+    public registerSelectionCallback(callback: SelectionCallback): void {
         if (this.isDestroyed) return;
         this.onSelectionCallbacks.push(callback);
     }
 
-    public removeCallback(callback: SelectionCallback): void {
+    public unregisterSelectionCallback(callback: SelectionCallback): void {
         if (this.isDestroyed) return;
         this.onSelectionCallbacks = this.onSelectionCallbacks.filter(cb => cb !== callback);
     }
@@ -54,8 +72,9 @@ export class SelectionManager {
         return !this.isDestroyed && this.currentSelection !== null;
     }
 
-    // --- Event Handling & Detection ---
+    // --- Selection Detection & Event Handling ---
 
+    /** Initializes selection detection event handlers. */
     private initSelectionDetection(): void {
         if (this.isDetectionInitialized) return;
 
@@ -63,55 +82,65 @@ export class SelectionManager {
             {
                 target: document,
                 event: EVENTS.MOUSEUP,
-                handler: this.handleSelectionChange.bind(this),
+                handler: this.updateCurrentSelection.bind(this),
             },
             {
                 target: document,
-                event: EVENTS.KEYDOWN,
+                event: EVENTS.KEYUP,
                 handler: this.createKeyboardSelectionHandler() as EventListener,
             },
         ]);
 
         this.isDetectionInitialized = true;
-        logger.debug('Selection event handlers registered');
+        logger.debug(`${SelectionManager.TAG} Selection event handlers registered`);
     }
 
+    /** Returns a debounced keyboard event handler for selection changes. */
     private createKeyboardSelectionHandler(): (event: KeyboardEvent) => void {
         return (event: KeyboardEvent) => {
             if (this.isDestroyed) return;
-            const isArrowKey = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key);
-            const hasModifier = event.shiftKey || event.ctrlKey || event.metaKey;
-            if (isArrowKey && hasModifier) {
-                setTimeout(() => this.handleSelectionChange(), 10);
+
+            const isArrowKey = ARROW_KEYS.has(event.key as KEYS);
+            const modifierPressed = event.shiftKey || event.ctrlKey || event.metaKey;
+
+            if (!isArrowKey || !modifierPressed) return;
+
+            if (this.selectionDebounceTimer) {
+                clearTimeout(this.selectionDebounceTimer);
             }
+
+            this.selectionDebounceTimer = setTimeout(() => {
+                this.updateCurrentSelection();
+                this.selectionDebounceTimer = null;
+            }, TOOLBAR_DELAY_SHORTCUT);
         };
     }
 
-    private handleSelectionChange(): void {
+    /** Updates the current selection state and notifies registered callbacks if changed. */
+    private updateCurrentSelection(): void {
         if (this.isDestroyed) return;
+
         try {
             const selection = getValidSelection();
             if (!selection) {
                 this.currentSelection = null;
                 return;
             }
-            const newSelection = this.analyzeSelection(selection);
+            const newSelection = this.processSelection(selection);
             if (newSelection && newSelection.selectionId !== this.currentSelection?.selectionId) {
                 this.currentSelection = newSelection;
-                this.notifyCallbacks(newSelection);
-                logger.debug('New selection processed:', newSelection.textModel);
+                this.executeSelectionCallbacks(newSelection);
+                logger.debug(`${SelectionManager.TAG} New selection processed:`, newSelection.textModel);
             }
         } catch (error) {
-            logger.error('Error handling selection event:', error);
+            logger.error(`${SelectionManager.TAG} No valid selection found:`, error);
         }
     }
 
-    // --- Selection Analysis & Model Creation ---
+    // --- Selection Processing & Model Creation ---
 
-    /**
-     * Returns a SelectionState if the selection is valid, otherwise null.
-     */
-    private analyzeSelection(selection: Selection): SelectionState | null {
+    /** Returns a SelectionState if the selection is valid, otherwise null. */
+    private processSelection(selection: Selection): SelectionState | null {
         try {
             const range = selection.getRangeAt(0);
             const selectionRect = range.getBoundingClientRect();
@@ -122,7 +151,7 @@ export class SelectionManager {
             }
 
             const selectionId = this.generateSelectionId(textContent);
-            const textModel = this.createTextModel(selection, range);
+            const textModel = this.assembleTextModel(selection, range);
 
             return {
                 textModel,
@@ -130,12 +159,13 @@ export class SelectionManager {
                 selectionId,
             };
         } catch (error) {
-            logger.error('Error processing selection:', error);
+            logger.error(`${SelectionManager.TAG} Error processing selection:`, error);
             return null;
         }
     }
 
-    private createTextModel(selection: Selection, range: Range): TextModel {
+    /** Assembles a TextModel from the selection and range information. */
+    private assembleTextModel(selection: Selection, range: Range): TextModel {
         const analyzer = new TextSelectionAnalyzer();
         const currentTab = {
             url: window.location.href,
@@ -148,10 +178,12 @@ export class SelectionManager {
 
     // --- Utilities ---
 
+    /** Generates a unique selection ID based on text content and timestamp. */
     private generateSelectionId(textContent: string): string {
         return `selection_${this.simpleHash(textContent)}`;
     }
 
+    /** Simple hash function for generating IDs from a string. */
     private simpleHash(str: string): string {
         let hash = 0;
         for (let i = 0; i < str.length; i++) {
@@ -159,15 +191,16 @@ export class SelectionManager {
             hash = (hash << 5) - hash + char;
             hash = hash & hash;
         }
-        return Math.abs(hash).toString(36);
+        return Math.abs(hash).toString(36) + Date.now().toString(36);
     }
 
-    private notifyCallbacks(state: SelectionState): void {
+    /** Executes all registered selection callbacks with the current state, catching errors. */
+    private executeSelectionCallbacks(state: SelectionState): void {
         this.onSelectionCallbacks.forEach(callback => {
             try {
                 callback(state);
             } catch (error) {
-                logger.error('Error in selection callback:', error);
+                logger.error(`${SelectionManager.TAG} Error in selection callback:`, error);
             }
         });
     }

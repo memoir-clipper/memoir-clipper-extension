@@ -1,36 +1,40 @@
 import { logger } from '@/utils/helpers/logger';
 import type { ShortcutCallback, ShortcutConfig } from '@/utils/values/types';
 
-/**
- * Manages keyboard shortcuts for the content script.
- * Allows registration, unregistration, and handling of keyboard shortcuts.
- * Shortcuts can be triggered by specific key combinations.
- */
 export class ShortcutManager {
+    private static readonly TAG = '[ShortcutManager]';
+    private static instance: ShortcutManager | null = null;
+
+    private isDestroyed = false;
     private shortcuts = new Map<string, { config: ShortcutConfig; callback: ShortcutCallback }>();
     private keyDownHandler: (event: KeyboardEvent) => void;
-    private isDestroyed = false;
 
-    // --- Lifecycle ---
+    // --- Constructor & Singleton ---
 
-    constructor() {
+    private constructor() {
         this.keyDownHandler = this.handleKeyDown.bind(this);
         this.setupEventListeners();
     }
 
-    /**
-     * Destroys the ShortcutManager, removing all event listeners and clearing shortcuts.
-     */
+    public static getInstance(): ShortcutManager {
+        ShortcutManager.instance ??= new ShortcutManager();
+        return ShortcutManager.instance;
+    }
+
+    // --- Lifecycle Management ---
+
     public destroy(): void {
         if (this.isDestroyed) return;
         this.isDestroyed = true;
+
         try {
             document.removeEventListener('keydown', this.keyDownHandler);
             const shortcutCount = this.shortcuts.size;
             this.shortcuts.clear();
-            logger.debug(`ShortcutManager destroyed. Cleaned up ${shortcutCount} shortcuts`);
+            ShortcutManager.instance = null;
+            logger.debug(`${ShortcutManager.TAG} destroyed. Cleaned up ${shortcutCount} shortcuts`);
         } catch (error) {
-            logger.error('Error during ShortcutManager destruction:', error);
+            logger.error(`${ShortcutManager.TAG} Error during destruction:`, error);
         }
     }
 
@@ -38,51 +42,46 @@ export class ShortcutManager {
         document.addEventListener('keydown', this.keyDownHandler);
     }
 
-    // --- Registration ---
+    // --- Shortcut Registration & Management ---
 
-    /**
-     * Register a new keyboard shortcut.
-     */
     public register(id: string, config: ShortcutConfig, callback: ShortcutCallback): void {
         if (this.isDestroyed) {
-            logger.warn('Cannot register shortcut: ShortcutManager is destroyed');
+            logger.warn(`${ShortcutManager.TAG} Cannot register shortcut: ShortcutManager is destroyed`);
             return;
         }
+
         if (!id || typeof callback !== 'function') {
-            logger.error('Invalid shortcut registration: ID and callback are required');
+            logger.error(`${ShortcutManager.TAG} Invalid shortcut registration: ID and callback are required`);
             return;
         }
+
         if (this.shortcuts.has(id)) {
-            logger.warn(`Shortcut with ID '${id}' already exists, overriding`);
+            logger.warn(`${ShortcutManager.TAG} Shortcut with ID '${id}' already exists, overriding`);
         }
+
         this.shortcuts.set(id, { config, callback });
     }
 
-    /**
-     * Unregister an existing keyboard shortcut.
-     */
     public unregister(id: string): void {
         if (this.isDestroyed) {
-            logger.warn('Cannot unregister shortcut: ShortcutManager is destroyed');
+            logger.warn(`${ShortcutManager.TAG} Cannot unregister shortcut: ShortcutManager is destroyed`);
             return;
         }
+
         if (!this.shortcuts.delete(id)) {
-            logger.warn(`Shortcut with ID '${id}' not found`);
+            logger.warn(`${ShortcutManager.TAG} Shortcut with ID '${id}' not found`);
         }
     }
 
-    /**
-     * Remove all registered shortcuts.
-     */
     public clearAll(): void {
         if (this.isDestroyed) {
-            logger.warn('Cannot clear shortcuts: ShortcutManager is destroyed');
+            logger.warn(`${ShortcutManager.TAG} Cannot clear shortcuts: ShortcutManager is destroyed`);
             return;
         }
         this.shortcuts.clear();
     }
 
-    // --- Query ---
+    // --- Query Methods ---
 
     public getShortcutCount(): number {
         return this.isDestroyed ? 0 : this.shortcuts.size;
@@ -94,8 +93,10 @@ export class ShortcutManager {
 
     // --- Event Handling ---
 
+    /** Handles keydown events and triggers the appropriate shortcut callbacks. */
     private handleKeyDown(event: KeyboardEvent): void {
         if (this.isDestroyed) return;
+
         for (const [id, { config, callback }] of this.shortcuts) {
             if (this.matchesShortcut(event, config)) {
                 event.preventDefault();
@@ -103,21 +104,21 @@ export class ShortcutManager {
                 try {
                     callback(event);
                 } catch (error) {
-                    logger.error(`Error in shortcut callback for ${id}:`, error);
+                    logger.error(`${ShortcutManager.TAG} Error in shortcut callback for ${id}:`, error);
                 }
                 break;
             }
         }
     }
 
-    // --- Matching Logic ---
-
+    /** Checks if the given keyboard event matches the shortcut configuration. */
     private matchesShortcut(event: KeyboardEvent, config: ShortcutConfig): boolean {
         return (
             event.ctrlKey === config.ctrlKey &&
             event.shiftKey === config.shiftKey &&
             event.altKey === config.altKey &&
-            (event.key === config.key || event.key === config.key.toLowerCase())
+            event.metaKey === config.metaKey &&
+            (event.key === config.key || event.key.toLowerCase() === config.key.toLowerCase())
         );
     }
 }
