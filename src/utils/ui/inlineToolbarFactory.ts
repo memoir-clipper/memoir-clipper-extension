@@ -245,6 +245,14 @@ export class InlineToolbarInstance extends BaseInstance {
         logger.debug(`${InlineToolbarInstance.TAG}: Updated tag option`, { id: optionId, label: updatedOption.label });
     }
 
+    public getSelectionData(): ToolbarSelectedData {
+        return { ...this.selectedData };
+    }
+
+    public setSelectionData(data: Partial<ToolbarSelectedData>): void {
+        this.selectedData = { ...this.selectedData, ...data };
+    }
+
     /** Resets all selection data to defaults and resets dropdowns/toggles. */
     public resetSelectionData(): void {
         this.selectedData = this.getDefaultSelectedData();
@@ -261,12 +269,14 @@ export class InlineToolbarInstance extends BaseInstance {
     // --- Public API: Toolbar Visibility & State ---
 
     /** Shows the toolbar and resets selection. */
-    public show(): void {
+    public show(reset = true): void {
         if (!this.container?.parentNode) {
             logger.warn(`${InlineToolbarInstance.TAG}: Cannot show - element not in DOM`);
             return;
         }
-        this.resetSelectionData();
+        if (reset) {
+            this.resetSelectionData();
+        }
         this.container.classList.add(CLASS_INLINE_TOOLBAR_VISIBLE);
         this.focus(0);
     }

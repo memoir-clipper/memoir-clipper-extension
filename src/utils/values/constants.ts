@@ -3,23 +3,16 @@ import { Environment, getEnvironment } from '../helpers/environment';
 import type { ShortcutConfig } from './types';
 import type { DropdownOption } from '../ui/uiConfig';
 
-/**
- * Application tag for logging and debugging.
- */
 export const TAG = 'Memoir';
 
-/**
- * Logging configuration using Vite environment variables.
- */
+/** Logging configuration using Vite environment variables. */
 export const MINIMUM_LOG_LEVEL: LogLevel =
     getEnvironment() === Environment.PRODUCTION ? LogLevel.ERROR : LogLevel.DEBUG;
 
-/**
- * Common string constants.
- */
 export const TRUE = 'true';
 export const FALSE = 'false';
 export const MINUS_ONE = '-1';
+export const SECONDS = 1000;
 
 export const INLINE_TOOLBAR_SHORTCUT: ShortcutConfig = {
     key: KEYS.M,

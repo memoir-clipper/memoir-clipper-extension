@@ -14,8 +14,11 @@ export class InlineToolbarManager {
 
     private toolbarInstance: InlineToolbarInstance | null = null;
     private isDestroyed = false;
+
     private readonly eventManager = new EventManager();
     private toolbarContainer: HTMLElement | null = null;
+    private onHideCallback: (reason: ToolbarHideReason, toolbarSelectedData: ToolbarSelectedData | null) => void =
+        () => {};
 
     constructor() {
         this.setupGlobalEventListeners();
@@ -34,16 +37,39 @@ export class InlineToolbarManager {
             return;
         }
 
-        this.positionAndShow(selectionRect);
-        logger.debug(InlineToolbarManager.TAG, 'Toolbar shown');
+        this.positionAndShow(selectionRect, null);
+        logger.debug(InlineToolbarManager.TAG, 'Toolbar shown with default data');
+    }
+
+    /** Shows toolbar with cached selection data. */
+    public showWithData(selectionRect: DOMRect, cachedData: ToolbarSelectedData): void {
+        if (this.isDestroyed || !this.toolbarInstance) {
+            logger.warn(
+                InlineToolbarManager.TAG,
+                'Cannot show toolbar: Manager is destroyed or toolbar not initialized',
+            );
+            return;
+        }
+
+        this.positionAndShow(selectionRect, cachedData);
+        logger.debug(InlineToolbarManager.TAG, 'Toolbar shown with cached data', cachedData);
     }
 
     /** Hides toolbar. */
     public hide(reason: ToolbarHideReason): void {
         if (this.isDestroyed || !this.toolbarInstance) return;
 
+        const currentData = this.toolbarInstance.getSelectionData();
+
         this.toolbarInstance.hide();
-        logger.debug(InlineToolbarManager.TAG, 'Toolbar hidden:', reason);
+        this.onHideCallback(reason, currentData);
+
+        logger.debug(InlineToolbarManager.TAG, 'Toolbar hidden:', reason, currentData);
+    }
+
+    /** Sets callback for hide events. */
+    public onHide(callback: (reason: ToolbarHideReason, selectionData: ToolbarSelectedData | null) => void): void {
+        this.onHideCallback = callback;
     }
 
     /** Destroys the toolbar and cleans up resources. */
@@ -131,7 +157,7 @@ export class InlineToolbarManager {
     // --- Toolbar Positioning ---
 
     /** Calculates and applies optimal position, then shows the toolbar. */
-    private positionAndShow(selectionRect: DOMRect): void {
+    private positionAndShow(selectionRect: DOMRect, cachedData: ToolbarSelectedData | null): void {
         if (this.isDestroyed || !this.toolbarContainer || !this.toolbarInstance) {
             logger.error(InlineToolbarManager.TAG, 'Toolbar element not ready for positioning');
             return;
@@ -141,7 +167,15 @@ export class InlineToolbarManager {
         const optimalPosition = ToolbarPositioningUtil.calculatePosition(toolbarRect, selectionRect);
 
         this.applyPosition(optimalPosition);
-        this.toolbarInstance.show();
+
+        // Set cached data BEFORE showing the toolbar
+        if (cachedData) {
+            this.toolbarInstance.setSelectionData(cachedData);
+            this.toolbarInstance.show(false); // Don't reset since we just set the data
+        } else {
+            this.toolbarInstance.show(true); // Reset to defaults
+        }
+
         logger.debug(InlineToolbarManager.TAG, 'Toolbar positioned at:', optimalPosition);
     }
 
