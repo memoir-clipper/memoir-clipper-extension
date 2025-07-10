@@ -311,8 +311,58 @@ export class InlineToolbarInstance extends BaseInstance {
         const toolbar = DOM_UTILS.createElement(TAGS.DIV, CLASS_INLINE_TOOLBAR);
         toolbar.setAttribute(ATTRS.ROLE, 'toolbar');
         toolbar.setAttribute(ATTRS.ARIA_LABEL, 'Inline text selection toolbar');
+
+        // Prevent all clicks within toolbar from clearing text selection
+        this.setupSelectionPreservation(toolbar);
+
         this.getComponentEntries().forEach(({ id, instance }) => this.registerComponent(toolbar, id, instance));
         return toolbar;
+    }
+
+    /** Prevents all mouse events within the toolbar from clearing text selection. */
+    private setupSelectionPreservation(toolbar: HTMLElement): void {
+        // Prevent mousedown from starting a new selection or clearing existing one
+        this.eventManager.addEventHandler(
+            toolbar,
+            EVENTS.MOUSEDOWN,
+            (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+            },
+            { capture: true },
+        );
+
+        // Prevent mouseup from affecting selection
+        this.eventManager.addEventHandler(
+            toolbar,
+            EVENTS.MOUSEUP,
+            (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+            },
+            { capture: true },
+        );
+
+        // Prevent click from clearing selection
+        this.eventManager.addEventHandler(
+            toolbar,
+            EVENTS.CLICK,
+            (e: Event) => {
+                e.stopPropagation();
+            },
+            { capture: true },
+        );
+
+        // Prevent context menu which could also affect selection
+        this.eventManager.addEventHandler(
+            toolbar,
+            'contextmenu',
+            (e: Event) => {
+                e.preventDefault();
+                e.stopPropagation();
+            },
+            { capture: true },
+        );
     }
 
     /** Returns an array of all toolbar component entries. */
@@ -351,9 +401,8 @@ export class InlineToolbarInstance extends BaseInstance {
             this.handleFocusChange(componentId);
         });
 
-        // MOUSEDOWN EVENT: Immediate mouse response
+        // MOUSEDOWN EVENT: Handle focus without affecting selection
         this.eventManager.addEventHandler(focusableElement, 'mousedown', (e: Event) => {
-            e.preventDefault();
             this.handleMouseInteraction(componentId, focusableElement);
         });
 
