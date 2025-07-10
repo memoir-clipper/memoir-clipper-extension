@@ -139,9 +139,9 @@ export class ToggleInstance extends BaseInstance {
 
     /** Sets up event handlers for the toggle button. */
     private setupEvents(): void {
-        // Click handling
+        // Click handling - don't prevent default since toolbar handles it
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
-            e.preventDefault();
+            e.stopPropagation();
             this.toggle();
         });
 
@@ -154,9 +154,8 @@ export class ToggleInstance extends BaseInstance {
             }
         });
 
-        // Handle mouse down for consistent focus behavior
-        this.eventManager.addEventHandler(this.button, EVENTS.MOUSEDOWN, (e: Event) => {
-            e.preventDefault();
+        // Handle mousedown for focus
+        this.eventManager.addEventHandler(this.button, EVENTS.MOUSEDOWN, (_e: Event) => {
             requestAnimationFrame(() => {
                 this.button.focus();
             });

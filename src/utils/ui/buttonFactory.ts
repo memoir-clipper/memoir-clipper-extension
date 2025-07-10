@@ -101,11 +101,10 @@ export class ButtonInstance extends BaseInstance {
 
     /** Enhanced event setup for natural interaction patterns. */
     private setupEvents(): void {
-        // Click handling with proper event management
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
-            e.preventDefault();
+            e.stopPropagation();
             this.click();
-            this.button.blur();
+            this.button.blur(); // Remove focus after click
         });
 
         // Keyboard interaction

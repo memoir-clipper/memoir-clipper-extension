@@ -428,16 +428,14 @@ export class DropdownInstance extends BaseInstance {
         }
     }
 
-    /** Enhanced event setup with comprehensive focus management. */
+    /** Sets up all event handlers for dropdown interaction. */
     private setupEvents(): void {
-        // Click toggles the dropdown
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
-            e.preventDefault();
             e.stopPropagation();
             this.toggleDropdown();
         });
 
-        // Comprehensive keyboard handling
+        // Keyboard navigation for button
         this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
             const keyEvent = e as KeyboardEvent;
 
@@ -464,12 +462,27 @@ export class DropdownInstance extends BaseInstance {
             }
         });
 
-        // Menu interaction handling
         this.eventManager.addEventHandler(this.menu, EVENTS.CLICK, (e: Event) => {
             e.stopPropagation();
         });
 
-        // Search input focus management
+        // Option click handling
+        this.menu.addEventListener('click', (e: Event) => {
+            const target = e.target as Element;
+            const optionElement = target.closest(`.${CLASS_DROPDOWN_OPTION}`);
+
+            if (optionElement) {
+                const optionId = optionElement.getAttribute('data-option-id');
+                if (optionId) {
+                    const option = this.options.find(opt => opt.id === optionId);
+                    if (option) {
+                        this.selectOption(option);
+                    }
+                }
+            }
+        });
+
+        // Search input handling - preserve selection
         if (this.searchInput) {
             this.eventManager.addEventHandler(this.searchInput, 'blur', (e: Event) => {
                 const blurEvent = e as FocusEvent;
@@ -480,7 +493,6 @@ export class DropdownInstance extends BaseInstance {
                     return;
                 }
 
-                // Close dropdown when search input loses focus to outside elements
                 setTimeout(() => {
                     if (this.isOpen && !this.isDropdownFocused()) {
                         this.close();
@@ -489,7 +501,7 @@ export class DropdownInstance extends BaseInstance {
             });
         }
 
-        // Global click outside handler
+        // Global click outside handler - this won't trigger for toolbar clicks now
         this.eventManager.addEventHandler(document, EVENTS.MOUSEDOWN, (e: Event) => {
             if (!this.container?.contains(e.target as Node) && this.isOpen) {
                 this.close();
