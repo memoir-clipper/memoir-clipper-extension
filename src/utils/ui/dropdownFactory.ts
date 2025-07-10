@@ -430,8 +430,8 @@ export class DropdownInstance extends BaseInstance {
 
     /** Sets up all event handlers for dropdown interaction. */
     private setupEvents(): void {
-        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
-            e.stopPropagation();
+        // Mouse click handling
+        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (_e: Event) => {
             this.toggleDropdown();
         });
 

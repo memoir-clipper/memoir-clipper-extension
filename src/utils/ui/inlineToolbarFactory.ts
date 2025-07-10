@@ -319,41 +319,54 @@ export class InlineToolbarInstance extends BaseInstance {
         return toolbar;
     }
 
-    /** Prevents all mouse events within the toolbar from clearing text selection. */
+    /** Prevents text selection clearing while allowing component interactions. */
     private setupSelectionPreservation(toolbar: HTMLElement): void {
-        // Prevent mousedown from starting a new selection or clearing existing one
+        // Only prevent mousedown on the toolbar container itself, not on interactive elements
         this.eventManager.addEventHandler(
             toolbar,
             EVENTS.MOUSEDOWN,
             (e: Event) => {
+                const target = e.target as Element;
+
+                if (
+                    target.tagName === TAGS.BUTTON ||
+                    target.tagName === TAGS.INPUT ||
+                    target.closest(TAGS.BUTTON) ||
+                    target.closest(TAGS.INPUT)
+                ) {
+                    return;
+                }
+
                 e.preventDefault();
                 e.stopPropagation();
             },
             { capture: true },
         );
 
-        // Prevent mouseup from affecting selection
+        // Prevent mouseup only on non-interactive areas
         this.eventManager.addEventHandler(
             toolbar,
             EVENTS.MOUSEUP,
             (e: Event) => {
+                const target = e.target as Element;
+
+                // Allow mouseup on interactive elements
+                if (
+                    target.tagName === 'BUTTON' ||
+                    target.tagName === 'INPUT' ||
+                    target.closest('button') ||
+                    target.closest('input')
+                ) {
+                    return;
+                }
+
                 e.preventDefault();
                 e.stopPropagation();
             },
             { capture: true },
         );
 
-        // Prevent click from clearing selection
-        this.eventManager.addEventHandler(
-            toolbar,
-            EVENTS.CLICK,
-            (e: Event) => {
-                e.stopPropagation();
-            },
-            { capture: true },
-        );
-
-        // Prevent context menu which could also affect selection
+        // Always prevent context menu
         this.eventManager.addEventHandler(
             toolbar,
             'contextmenu',
@@ -402,7 +415,7 @@ export class InlineToolbarInstance extends BaseInstance {
         });
 
         // MOUSEDOWN EVENT: Handle focus without affecting selection
-        this.eventManager.addEventHandler(focusableElement, 'mousedown', (e: Event) => {
+        this.eventManager.addEventHandler(focusableElement, 'mousedown', (_e: Event) => {
             this.handleMouseInteraction(componentId, focusableElement);
         });
 
