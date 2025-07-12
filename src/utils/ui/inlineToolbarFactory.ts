@@ -650,8 +650,8 @@ export class InlineToolbarInstance extends BaseInstance {
 
     /** Initializes default options for spaces and tags if not set. */
     private initializeDefaultOptions(): void {
-        this.spaceOptions ||= TOOLBAR_SPACES_DEFAULT_OPTIONS;
-        this.tagOptions ||= TOOLBAR_TAGS_DEFAULT_OPTIONS;
+        if (!this.spaceOptions.length) this.spaceOptions = TOOLBAR_SPACES_DEFAULT_OPTIONS;
+        if (!this.tagOptions.length) this.tagOptions = TOOLBAR_TAGS_DEFAULT_OPTIONS;
     }
 
     /** Updates the options for a dropdown by id. */
