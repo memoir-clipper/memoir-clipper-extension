@@ -13,12 +13,15 @@ This document outlines the primary packages and folders within the `src` directo
 - **content/**
     - Contains content scripts injected into web pages.
     - Responsible for UI orchestration, user selection handling, toolbars, keyboard shortcuts, and DOM/content analysis utilities.
-    - Includes managers for selection, toolbar, and shortcuts, as well as helpers for DOM and content analysis.
+    - Selection IDs are now generated based on selection content and position for consistency.
+    - Toolbar selection data is cached and restored for repeated selections within a short time frame.
+    - Dropdown menus support keyboard navigation and focus management.
     - **Entry point:** `content/index.ts`
 
 - **models/**
     - Defines TypeScript data models for text, images, links, pages, and extension messaging.
     - Facilitates structured data exchange and communication.
+    - Models support unique ID generation and serialization.
 
 - **popup/**
     - Implements the browser action popup interface and its logic.
@@ -30,13 +33,15 @@ This document outlines the primary packages and folders within the `src` directo
 
 - **styles/**
     - Contains Tailwind CSS files, dynamic style injectors, and isolated CSS for UI components (buttons, dropdowns, toolbars, toggles).
+    - Style architecture now supports a universal variant type for consistent theming.
 
 - **utils/**
     - Houses shared utilities, helpers, constants, enums, type definitions, and UI factories.
+    - Style variant mapping is centralized for all UI components.
     - **Subfolders:**
         - `helpers/`: Utilities for DOM manipulation, favicon retrieval, logging, environment detection, and selection handling.
         - `values/`: Centralized constants, enums, identifiers, strings, HTML tags/attributes, and types.
-        - `ui/`: Factories and base logic for UI elements such as dropdowns, toggles, and buttons.
+        - `ui/`: Factories and base logic for UI elements such as dropdowns, toggles, and buttons, now supporting variants.
 
 ---
 

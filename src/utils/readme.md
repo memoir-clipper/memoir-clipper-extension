@@ -33,9 +33,26 @@ The `utils/` package provides shared utility functions, constants, enums, type d
 
 - **ui/**  
   Factories and base logic for UI components:
-  - `baseFactory.ts`: Shared base logic for UI factories (style injection, lifecycle).
+  - `baseFactory.ts`: Shared base logic for UI factories (style injection, lifecycle, variant support).
   - `buttonFactory.ts`: Factory for creating styled button elements.
-  - `dropdownFactory.ts`: Factory for dropdown UI components.
+  - `dropdownFactory.ts`: Factory for dropdown UI components, now supporting keyboard navigation and focus management.
   - `toggleFactory.ts`: Factory for toggle switches.
-  - `inlineToolbarFactory.ts`: Factory for the inline/contextual toolbar UI.
-  - `uiConfig.ts`: Configuration options and types
+  - `inlineToolbarFactory.ts`: Factory for the inline/contextual toolbar UI, supporting variant inheritance.
+  - `uiConfig.ts`: Configuration options and types for all UI components, including a universal variant type.
+
+---
+
+## Key Updates
+
+- **Style Variants:**  
+  All UI factories now support a universal variant type (e.g., default, pastel, dark, glassy). Styles are mapped by variant and managed centrally for consistency.
+
+- **Dropdowns:**  
+  Dropdown menus support keyboard navigation, focus management, and selection highlighting.
+
+- **Selection Handling:**  
+  Selection IDs are generated based on content and position, ensuring reliable caching and restoration of toolbar state.
+
+---
+
+For more details, see inline comments in each file or refer to the main project README.
