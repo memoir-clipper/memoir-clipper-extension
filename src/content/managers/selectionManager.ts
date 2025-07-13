@@ -259,6 +259,8 @@ export class SelectionManager {
 
     /** Executes all registered selection callbacks with the current state, catching errors. */
     private executeSelectionCallbacks(state: SelectionState | null): void {
+        if (!state) return;
+
         this.onSelectionCallbacks.forEach(callback => {
             try {
                 callback(state);
