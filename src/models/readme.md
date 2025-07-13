@@ -14,6 +14,8 @@ The `models/` package defines all core data models and messaging structures used
 
 - **textModel.ts**  
   Represents a text selection captured from a web page, including plain text, semantic HTML, and page metadata.
+  - Selection IDs are generated based on content and position for consistency.
+  - Supports extraction of clean text from HTML.
 
 - **imageModel.ts**  
   Represents an image captured from a web page, including the image source URL and page context.

@@ -80,6 +80,12 @@ export type ToolbarSelectedData = {
     preserveFormatting: boolean;
 };
 
+export type CachedToolbarSelectedData = {
+    data: ToolbarSelectedData;
+    timestamp: number;
+    selectionId: string;
+};
+
 /**
  * Supported variants for dropdown, toggle, and button components.
  */

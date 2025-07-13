@@ -2,6 +2,7 @@ import {
     CLASS_DROPDOWN_ARROW,
     CLASS_DROPDOWN_BUTTON,
     CLASS_DROPDOWN_CHECKBOX,
+    CLASS_DROPDOWN_COLOR_INDICATOR,
     CLASS_DROPDOWN_CONTAINER,
     CLASS_DROPDOWN_EMPTY,
     CLASS_DROPDOWN_LABEL,
@@ -10,6 +11,8 @@ import {
     CLASS_DROPDOWN_OPTION,
     CLASS_DROPDOWN_OPTION_CONTENT,
     CLASS_DROPDOWN_OPTION_DESCRIPTION,
+    CLASS_DROPDOWN_OPTION_FLEX,
+    CLASS_DROPDOWN_OPTION_FOCUSED,
     CLASS_DROPDOWN_OPTION_LABEL,
     CLASS_DROPDOWN_OPTION_SELECTED,
     CLASS_DROPDOWN_SEARCH,
@@ -160,13 +163,17 @@ export class DropdownStyles {
                 font-style: italic;
             }
             
-            /* Toolbar-specific dropdown styles */
             .${CLASS_DROPDOWN_SELECTION}--tags-selected {
                 color: #3b82f6;
                 font-weight: 500;
             }
-            
-            .dropdown-color-indicator {
+                
+            .${CLASS_DROPDOWN_OPTION_FOCUSED} {
+                background-color: #e3f2fd;
+                outline: 2px solid #2196f3;
+            }
+
+            .${CLASS_DROPDOWN_COLOR_INDICATOR} {
                 display: inline-block;
                 width: 12px;
                 height: 12px;
@@ -174,22 +181,22 @@ export class DropdownStyles {
                 margin-right: 8px;
                 flex-shrink: 0;
             }
-            
-            .dropdown-color-indicator--large {
+
+            .${CLASS_DROPDOWN_COLOR_INDICATOR}--large {
                 width: 16px;
                 height: 16px;
                 border: 1px solid rgba(0, 0, 0, 0.1);
                 margin-right: 6px;
             }
-            
-            .dropdown-option-flex {
+
+            .${CLASS_DROPDOWN_OPTION_FLEX} {
                 display: flex;
                 align-items: center;
                 width: 100%;
                 flex: 1;
             }
-            
-            .dropdown-option-label {
+
+            .${CLASS_DROPDOWN_OPTION_LABEL} {
                 flex: 1;
             }
         `;

@@ -1,7 +1,7 @@
 import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
-import { EVENTS } from '@/utils/values/enums';
+import { EVENTS, KEYS } from '@/utils/values/enums';
 import { BaseFactory, BaseInstance } from './baseFactory';
 import {
     CLASS_BUTTON_CONTAINER,
@@ -99,10 +99,22 @@ export class ButtonInstance extends BaseInstance {
 
     // --- Event Handling ---
 
-    /** Sets up the click event handler for the button. */
+    /** Enhanced event setup for natural interaction patterns. */
     private setupEvents(): void {
-        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, () => {
+        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
+            e.stopPropagation();
             this.click();
+            this.button.blur();
+        });
+
+        // Keyboard interaction - Enter only
+        this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
+            const keyEvent = e as KeyboardEvent;
+            if (keyEvent.key === KEYS.ENTER) {
+                e.preventDefault();
+                this.click();
+                this.button.blur();
+            }
         });
     }
 }

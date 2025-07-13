@@ -26,8 +26,12 @@ The `content/` package contains all logic that runs as content scripts injected 
 - **managers/**  
   Contains orchestrators and managers for UI and user interactions:
   - `selectionOrchestratorManager.ts`: Singleton that coordinates selection, context menu, and shortcuts.
+    - Caches toolbar selection data for repeated selections within 90 seconds.
+    - Restores toolbar state if the same selection is re-activated.
   - `selectionManager.ts`: Detects and manages text selections, notifies listeners.
+    - Selection IDs are generated based on selection content and position for reliability.
   - `inlineToolbarManager.ts`: Handles the lifecycle, positioning, and visibility of the inline toolbar/context menu.
+    - Dropdowns now support keyboard navigation and focus management.
   - `shortcutManager.ts`: Registers and handles keyboard shortcuts for actions.
 
 - **helpers/**  
@@ -43,13 +47,16 @@ The `content/` package contains all logic that runs as content scripts injected 
 ## Key Responsibilities
 
 - **Selection Detection:**  
-  Listens for mouse and keyboard events to detect valid text selections.
+  Listens for mouse and keyboard events to detect valid text selections. Selection IDs are stable for identical selections.
 
 - **Inline Toolbar UI:**  
-  Renders a contextual toolbar near the selection, allowing quick actions (e.g., save, tag, AI actions).
+  Renders a contextual toolbar near the selection, allowing quick actions (e.g., save, tag, AI actions). Toolbar state is preserved for repeated selections.
 
 - **Keyboard Shortcuts:**  
   Enables users to trigger the toolbar or actions via configurable shortcuts.
+
+- **Dropdown Menus:**  
+  Dropdowns now maintain focus and support keyboard navigation (arrow keys, enter, space).
 
 - **Content Analysis:**  
   Analyzes the selection for formatting, structure, and context to create rich data models.

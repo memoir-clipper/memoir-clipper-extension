@@ -29,6 +29,7 @@ export const CLASS_DROPDOWN_CHECKBOX = 'memoir-dropdown-checkbox';
 export const CLASS_DROPDOWN_ARROW = 'memoir-dropdown-arrow';
 export const CLASS_DROPDOWN_OPEN = 'memoir-dropdown-open';
 export const CLASS_DROPDOWN_OPTION = 'memoir-dropdown-option';
+export const CLASS_DROPDOWN_OPTION_FOCUSED = 'memoir-dropdown-option-focused';
 export const CLASS_DROPDOWN_OPTION_SELECTED = 'memoir-dropdown-option--selected';
 export const CLASS_DROPDOWN_OPTION_LABEL = 'memoir-dropdown-option-label';
 export const CLASS_DROPDOWN_OPTION_DESCRIPTION = 'memoir-dropdown-option-description';

@@ -25,9 +25,11 @@ The `styles/` package contains all CSS and style-related logic for the extension
 
 - **dropdownStyles.ts**  
   Contains isolated CSS and utility functions for dropdown UI components.
+  - Dropdown styles are now responsive and support a universal variant type.
 
 - **inlineToolbarStyles.ts**  
   Contains isolated CSS and utility functions for the inline/contextual toolbar.
+  - Toolbar styles inherit the universal variant type for consistent theming.
 
 - **toggleStyles.ts**  
   Contains isolated CSS and utility functions for toggle switches and similar UI elements.
@@ -42,8 +44,8 @@ The `styles/` package contains all CSS and style-related logic for the extension
 - **Dynamic Style Injection:**  
   Ensures that content script UIs are styled correctly, regardless of the host page's styles.
 
-- **Component Isolation:**  
-  Keeps styles for buttons, dropdowns, toolbars, and toggles modular and isolated to prevent conflicts.
+- **Component Isolation & Variants:**  
+  Keeps styles for buttons, dropdowns, toolbars, and toggles modular and isolated to prevent conflicts. All components support a universal variant type for future theming.
 
 ---
 

@@ -2,7 +2,7 @@ import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
 import { TRUE, FALSE } from '@/utils/values/constants';
-import { EVENTS } from '@/utils/values/enums';
+import { EVENTS, KEYS } from '@/utils/values/enums';
 import { BaseFactory, BaseInstance } from './baseFactory';
 import {
     CLASS_TOGGLE_CONTAINER,
@@ -139,8 +139,25 @@ export class ToggleInstance extends BaseInstance {
 
     /** Sets up event handlers for the toggle button. */
     private setupEvents(): void {
-        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, () => {
+        // Click handling
+        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (_e: Event) => {
             this.toggle();
+        });
+
+        // Keyboard interaction - Enter only
+        this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
+            const keyEvent = e as KeyboardEvent;
+            if (keyEvent.key === KEYS.ENTER) {
+                e.preventDefault();
+                this.toggle();
+            }
+        });
+
+        // Handle mousedown for focus
+        this.eventManager.addEventHandler(this.button, EVENTS.MOUSEDOWN, (_e: Event) => {
+            requestAnimationFrame(() => {
+                this.button.focus();
+            });
         });
     }
 }

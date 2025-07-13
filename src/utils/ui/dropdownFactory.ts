@@ -17,6 +17,7 @@ import {
     CLASS_DROPDOWN_OPTION,
     CLASS_DROPDOWN_OPTION_CONTENT,
     CLASS_DROPDOWN_OPTION_DESCRIPTION,
+    CLASS_DROPDOWN_OPTION_FOCUSED,
     CLASS_DROPDOWN_OPTION_LABEL,
     CLASS_DROPDOWN_OPTION_SELECTED,
     CLASS_DROPDOWN_SEARCH,
@@ -68,7 +69,6 @@ export class DropdownFactory extends BaseFactory {
 // --- DropdownInstance ---
 
 export class DropdownInstance extends BaseInstance {
-    // --- State ---
     private button: HTMLElement;
     private menu: HTMLElement;
     private searchInput?: HTMLInputElement;
@@ -77,6 +77,7 @@ export class DropdownInstance extends BaseInstance {
     private filteredOptions: DropdownOption[] = [];
     private selectedOptions = new Set<string>();
     private searchTerm = '';
+    private focusedIndex = -1;
 
     constructor(
         private options: DropdownOption[],
@@ -150,19 +151,18 @@ export class DropdownInstance extends BaseInstance {
 
     /** Replaces all dropdown options and updates selection/filter state. */
     public setOptions(options: DropdownOption[]): void {
-        this.options = [...options]; // Defensive copy
-        this.applyFilter(); // Reapply current filter
-        this.updateMenuItems(); // Update the DOM
+        this.options = [...options];
+        this.applyFilter();
+        this.updateMenuItems();
 
-        // Validate current selection - remove invalid selections
         const validIds = new Set(options.map(opt => opt.id));
         const invalidSelections = Array.from(this.selectedOptions).filter(id => !validIds.has(id));
         invalidSelections.forEach(id => {
             this.selectedOptions.delete(id);
         });
 
-        // Update button content to reflect any selection changes
         this.updateButtonContent();
+        this.resetFocusedIndex();
     }
 
     /** Adds a single option to the dropdown and updates the menu. */
@@ -172,6 +172,7 @@ export class DropdownInstance extends BaseInstance {
         this.updateMenuItems();
     }
 
+    /** Enhanced close method with proper focus restoration. */
     public close(): void {
         if (!this.isOpen) return;
 
@@ -179,13 +180,14 @@ export class DropdownInstance extends BaseInstance {
         this.container?.classList.remove(CLASS_DROPDOWN_OPEN);
         this.button.setAttribute(ATTRS.ARIA_EXPANDED, FALSE);
 
+        // Clear search state
         if (this.searchInput) {
             this.searchInput.value = '';
             this.searchTerm = '';
             this.applyFilter();
         }
 
-        // Return focus to button after closing
+        this.resetFocusedIndex();
         requestAnimationFrame(() => {
             this.button.focus();
         });
@@ -229,22 +231,6 @@ export class DropdownInstance extends BaseInstance {
         this.searchInput.placeholder = this.config.customInputPlaceholder ?? 'Search...';
         searchContainer.appendChild(this.searchInput);
         menu.appendChild(searchContainer);
-
-        this.eventManager.addEventHandler(this.searchInput, EVENTS.INPUT, () => {
-            this.searchTerm = this.searchInput!.value;
-            this.applyFilter();
-        });
-
-        this.eventManager.addEventHandler(this.searchInput, EVENTS.KEYDOWN, (event: Event) => {
-            const keyEvent = event as KeyboardEvent;
-            if (keyEvent.key === KEYS.ENTER && this.config.allowCustom) {
-                event.preventDefault();
-                this.handleCustomCreate();
-            } else if (keyEvent.key === KEYS.ESCAPE) {
-                event.preventDefault();
-                this.close();
-            }
-        });
     }
 
     private updateButtonContent(): void {
@@ -282,27 +268,24 @@ export class DropdownInstance extends BaseInstance {
             return;
         }
 
-        this.filteredOptions.forEach(option => {
-            const optionElement = this.createOptionElement(option);
+        this.filteredOptions.forEach((option, index) => {
+            const optionElement = this.createOptionElement(option, index);
             this.menu.appendChild(optionElement);
         });
+
+        this.highlightFocusedOption();
     }
 
-    private createOptionElement(option: DropdownOption): HTMLElement {
+    private createOptionElement(option: DropdownOption, index: number): HTMLElement {
         const optionElement = DOM_UTILS.createElement(TAGS.DIV, CLASS_DROPDOWN_OPTION);
         optionElement.setAttribute(ATTRS.ROLE, ATTRS.OPTION);
-        optionElement.setAttribute(ATTRS.ID, option.id);
+        optionElement.setAttribute(ATTRS.DATA_OPTION_INDEX, index.toString());
 
         if (this.selectedOptions.has(option.id)) {
             optionElement.classList.add(CLASS_DROPDOWN_OPTION_SELECTED);
         }
 
         optionElement.innerHTML = option.render ? option.render(option) : this.createDefaultOptionContent(option);
-
-        this.eventManager.addEventHandler(optionElement, EVENTS.CLICK, (event: Event) => {
-            event.stopPropagation();
-            this.selectOption(option);
-        });
 
         return optionElement;
     }
@@ -314,6 +297,68 @@ export class DropdownInstance extends BaseInstance {
         }
         content += DropdownFactory.html.optionContent(option.label, option.description);
         return content;
+    }
+
+    // --- Focus Management ---
+
+    private resetFocusedIndex(): void {
+        this.focusedIndex = -1;
+        this.highlightFocusedOption();
+    }
+
+    private setInitialFocus(): void {
+        // Focus on the first selected option, or first option if none selected
+        if (this.filteredOptions.length === 0) {
+            this.focusedIndex = -1;
+            return;
+        }
+
+        // Find first selected option
+        const selectedIndex = this.filteredOptions.findIndex(opt => this.selectedOptions.has(opt.id));
+        this.focusedIndex = selectedIndex !== -1 ? selectedIndex : 0;
+        this.highlightFocusedOption();
+    }
+
+    private highlightFocusedOption(): void {
+        const options = this.menu.querySelectorAll(`.${CLASS_DROPDOWN_OPTION}`);
+        options.forEach((option, index) => {
+            if (index === this.focusedIndex) {
+                option.classList.add(CLASS_DROPDOWN_OPTION_FOCUSED);
+                option.setAttribute(ATTRS.ARIA_SELECTED, TRUE);
+            } else {
+                option.classList.remove(CLASS_DROPDOWN_OPTION_FOCUSED);
+                option.setAttribute(ATTRS.ARIA_SELECTED, FALSE);
+            }
+        });
+    }
+
+    private handleArrowNavigation(key: string): void {
+        if (this.filteredOptions.length === 0) return;
+
+        if (key === KEYS.ARROW_DOWN) {
+            this.focusedIndex = (this.focusedIndex + 1) % this.filteredOptions.length;
+        } else if (key === KEYS.ARROW_UP) {
+            this.focusedIndex = this.focusedIndex <= 0 ? this.filteredOptions.length - 1 : this.focusedIndex - 1;
+        }
+
+        this.highlightFocusedOption();
+        this.scrollToFocusedOption();
+    }
+
+    /** Scrolls the focused option into view if needed. */
+    private scrollToFocusedOption(): void {
+        const focusedElement = this.menu.querySelector(`.${CLASS_DROPDOWN_OPTION_FOCUSED}`);
+        if (focusedElement) {
+            focusedElement.scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    /** Selects the currently focused option. */
+    private selectFocusedOption(): void {
+        if (this.focusedIndex >= 0 && this.focusedIndex < this.filteredOptions.length) {
+            const focusedOption = this.filteredOptions[this.focusedIndex];
+            this.selectOption(focusedOption);
+        }
     }
 
     // --- Selection, Filtering, and Custom Option ---
@@ -347,6 +392,7 @@ export class DropdownInstance extends BaseInstance {
         if (!term) {
             this.filteredOptions = this.options;
             this.updateMenuItems();
+            this.resetFocusedIndex();
             return;
         }
 
@@ -373,6 +419,7 @@ export class DropdownInstance extends BaseInstance {
 
         this.filteredOptions = startsWith.concat(includes, descIncludes);
         this.updateMenuItems();
+        this.resetFocusedIndex();
     }
 
     /** Handles creation and selection of a custom option from the search term. */
@@ -396,14 +443,23 @@ export class DropdownInstance extends BaseInstance {
 
     // --- Dropdown Open/Close & Event Handling ---
 
+    /** Opens the dropdown and manages focus. */
     private open(): void {
         if (this.isOpen) return;
+
         this.isOpen = true;
         this.container?.classList.add(CLASS_DROPDOWN_OPEN);
         this.button.setAttribute(ATTRS.ARIA_EXPANDED, TRUE);
-        if (this.searchInput) {
+        this.setInitialFocus();
+
+        // Smart focus: search input if available and searchable, otherwise keep on button
+        if (this.searchInput && this.config.searchable) {
             requestAnimationFrame(() => {
                 this.searchInput?.focus();
+            });
+        } else {
+            requestAnimationFrame(() => {
+                this.button.focus();
             });
         }
     }
@@ -417,47 +473,175 @@ export class DropdownInstance extends BaseInstance {
         }
     }
 
-    /** Sets up all event handlers for dropdown interaction. */
+    /** Registers all event handlers for dropdown interaction. */
     private setupEvents(): void {
-        // Toggle dropdown on button click
-        this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
+        this.eventManager.addEventHandlers([
+            {
+                target: this.button,
+                event: EVENTS.CLICK,
+                handler: this.handleButtonClick,
+            },
+            {
+                target: this.container!,
+                event: EVENTS.KEYDOWN,
+                handler: this.handleContainerKeydown,
+            },
+            {
+                target: this.menu,
+                event: EVENTS.CLICK,
+                handler: this.handleMenuClick,
+            },
+            {
+                target: this.menu,
+                event: EVENTS.MOUSEDOWN,
+                handler: this.handleMenuMousedown,
+            },
+            {
+                target: document,
+                event: EVENTS.MOUSEDOWN,
+                handler: this.handleDocumentMousedown,
+            },
+        ]);
+
+        if (this.searchInput) {
+            this.eventManager.addEventHandlers([
+                {
+                    target: this.searchInput,
+                    event: EVENTS.INPUT,
+                    handler: this.handleSearchInput,
+                },
+                {
+                    target: this.searchInput,
+                    event: EVENTS.KEYDOWN,
+                    handler: this.handleSearchKeydown,
+                },
+                {
+                    target: this.searchInput,
+                    event: EVENTS.BLUR,
+                    handler: this.handleSearchBlur,
+                },
+            ]);
+        }
+    }
+
+    private handleButtonClick = (e: Event): void => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.toggleDropdown();
+    };
+
+    private handleContainerKeydown = (e: Event): void => {
+        const keyEvent = e as KeyboardEvent;
+
+        if (keyEvent.key === KEYS.ENTER) {
             e.preventDefault();
             e.stopPropagation();
-            this.toggleDropdown();
-        });
 
-        // Keyboard navigation for button
-        this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
-            const keyEvent = e as KeyboardEvent;
-            if (keyEvent.key === KEYS.ENTER) {
-                e.preventDefault();
+            if (this.isOpen) {
+                // Don't handle if we're typing in search input
+                if (this.searchInput && document.activeElement === this.searchInput) {
+                    return;
+                }
+                this.selectFocusedOption();
+            } else {
                 this.toggleDropdown();
-            } else if (keyEvent.key === KEYS.ESCAPE && this.isOpen) {
+            }
+        } else if (keyEvent.key === KEYS.ESCAPE) {
+            if (this.isOpen) {
                 e.preventDefault();
+                e.stopPropagation();
                 this.close();
             }
-            if (this.config.keyboardShortcuts) {
-                const optionId = this.config.keyboardShortcuts[keyEvent.key.toUpperCase()];
-                if (optionId) {
-                    e.preventDefault();
-                    const option = this.options.find(opt => opt.id === optionId);
-                    if (option) {
-                        this.selectOption(option);
-                    }
+        } else if (keyEvent.key === KEYS.ARROW_DOWN || keyEvent.key === KEYS.ARROW_UP) {
+            if (this.isOpen) {
+                // Don't handle if we're typing in search input
+                if (this.searchInput && document.activeElement === this.searchInput) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleArrowNavigation(keyEvent.key);
+            }
+        }
+
+        // Handle keyboard shortcuts
+        if (this.config.keyboardShortcuts) {
+            const optionId = this.config.keyboardShortcuts[keyEvent.key.toUpperCase()];
+            if (optionId) {
+                e.preventDefault();
+                e.stopPropagation();
+                const option = this.options.find(opt => opt.id === optionId);
+                if (option) {
+                    this.selectOption(option);
                 }
             }
-        });
+        }
+    };
 
-        // Prevent menu click from closing dropdown
-        this.eventManager.addEventHandler(this.menu, EVENTS.CLICK, (e: Event) => {
-            e.stopPropagation();
-        });
+    private handleMenuClick = (e: Event): void => {
+        e.stopPropagation();
+        const target = e.target as HTMLElement;
+        const optionElement = target.closest(`.${CLASS_DROPDOWN_OPTION}`);
 
-        // Close dropdown when clicking outside
-        this.eventManager.addEventHandler(document, EVENTS.MOUSEDOWN, (e: Event) => {
-            if (!this.container?.contains(e.target as Node) && this.isOpen) {
+        if (optionElement) {
+            e.preventDefault();
+            const optionIndex = parseInt(optionElement.getAttribute(ATTRS.DATA_OPTION_INDEX) ?? MINUS_ONE);
+            if (optionIndex >= 0 && optionIndex < this.filteredOptions.length) {
+                this.focusedIndex = optionIndex;
+                this.highlightFocusedOption();
+                const option = this.filteredOptions[optionIndex];
+                this.selectOption(option);
+            }
+        }
+    };
+
+    private handleMenuMousedown = (e: Event): void => {
+        e.stopPropagation();
+    };
+
+    private handleDocumentMousedown = (e: Event): void => {
+        if (!this.container?.contains(e.target as Node) && this.isOpen) {
+            this.close();
+        }
+    };
+
+    private handleSearchInput = (): void => {
+        this.searchTerm = this.searchInput!.value;
+        this.applyFilter();
+    };
+
+    private handleSearchKeydown = (event: Event): void => {
+        const keyEvent = event as KeyboardEvent;
+        if (keyEvent.key === KEYS.ENTER && this.config.allowCustom) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.handleCustomCreate();
+        } else if (keyEvent.key === KEYS.ESCAPE) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.close();
+        } else if (keyEvent.key === KEYS.ARROW_DOWN || keyEvent.key === KEYS.ARROW_UP) {
+            event.preventDefault();
+            event.stopPropagation();
+            this.handleArrowNavigation(keyEvent.key);
+        }
+    };
+
+    /** Handles blur event for search input, closes dropdown if focus leaves. */
+    private handleSearchBlur = (e: Event): void => {
+        const blurEvent = e as FocusEvent;
+        const relatedTarget = blurEvent.relatedTarget as Element | null;
+        if (relatedTarget && this.container?.contains(relatedTarget)) return;
+        setTimeout(() => {
+            if (this.isOpen && !this.isDropdownFocused()) {
                 this.close();
             }
-        });
+        }, 0);
+    };
+
+    /** Returns true if any element within the dropdown currently has focus. */
+    private isDropdownFocused(): boolean {
+        const activeElement = document.activeElement;
+        return !!(activeElement && this.container?.contains(activeElement));
     }
 }

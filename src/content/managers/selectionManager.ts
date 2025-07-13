@@ -9,6 +9,7 @@ import type { KEYS } from '@/utils/values/enums';
 import { EVENTS } from '@/utils/values/enums';
 import type { SelectionState, SelectionCallback } from '@/utils/values/types';
 import { TextSelectionAnalyzer } from '../helpers/textSelectionAnalyzer';
+import type { InlineToolbarManager } from './inlineToolbarManager';
 
 export class SelectionManager {
     private static readonly TAG = '[SelectionManager]';
@@ -20,6 +21,8 @@ export class SelectionManager {
     private onSelectionCallbacks: SelectionCallback[] = [];
     private selectionDebounceTimer: ReturnType<typeof setTimeout> | null = null;
     private readonly eventManager = new EventManager();
+    private toolbarManager: InlineToolbarManager | null = null;
+    private lastMouseEvent: MouseEvent | null = null;
 
     // --- Singleton & Lifecycle ---
 
@@ -72,6 +75,11 @@ export class SelectionManager {
         return !this.isDestroyed && this.currentSelection !== null;
     }
 
+    /** Sets the toolbar manager reference for click filtering. */
+    public setToolbarManager(toolbarManager: InlineToolbarManager): void {
+        this.toolbarManager = toolbarManager;
+    }
+
     // --- Selection Detection & Event Handling ---
 
     /** Initializes selection detection event handlers. */
@@ -79,6 +87,14 @@ export class SelectionManager {
         if (this.isDetectionInitialized) return;
 
         this.eventManager.addEventHandlers([
+            {
+                target: document,
+                event: EVENTS.MOUSEDOWN,
+                handler: ((e: MouseEvent) => {
+                    this.lastMouseEvent = e;
+                }) as EventListener,
+                options: { capture: true },
+            },
             {
                 target: document,
                 event: EVENTS.MOUSEUP,
@@ -120,12 +136,24 @@ export class SelectionManager {
     private updateCurrentSelection(): void {
         if (this.isDestroyed) return;
 
+        // Check if the last click was within the toolbar area
+        if (this.toolbarManager && this.isLastClickWithinToolbar()) {
+            return;
+        }
+
+        // Check if we're clicking on an existing selection area when toolbar is visible
+        if (this.toolbarManager && this.toolbarManager.isVisible() && this.isClickOnCurrentSelection()) {
+            this.clearCurrentSelection();
+            return;
+        }
+
         try {
             const selection = getValidSelection();
             if (!selection) {
-                this.currentSelection = null;
+                this.clearCurrentSelection();
                 return;
             }
+
             const newSelection = this.processSelection(selection);
             if (newSelection && newSelection.selectionId !== this.currentSelection?.selectionId) {
                 this.currentSelection = newSelection;
@@ -134,6 +162,38 @@ export class SelectionManager {
             }
         } catch (error) {
             logger.error(`${SelectionManager.TAG} No valid selection found:`, error);
+        }
+    }
+
+    /** Checks if the last mouse event was within the toolbar area. */
+    private isLastClickWithinToolbar(): boolean {
+        if (!this.lastMouseEvent) return false;
+
+        const target = document.elementFromPoint(this.lastMouseEvent.clientX, this.lastMouseEvent.clientY);
+
+        return target ? this.toolbarManager!.containsElement(target) : false;
+    }
+
+    /** Checks if the click was on the current selection area when toolbar is visible. */
+    private isClickOnCurrentSelection(): boolean {
+        if (!this.lastMouseEvent || !this.currentSelection) return false;
+
+        const { clientX, clientY } = this.lastMouseEvent;
+        const { selectionRect } = this.currentSelection;
+
+        return (
+            clientX >= selectionRect.left &&
+            clientX <= selectionRect.right &&
+            clientY >= selectionRect.top &&
+            clientY <= selectionRect.bottom
+        );
+    }
+
+    /** Clears the current selection and notifies callbacks. */
+    private clearCurrentSelection(): void {
+        if (this.currentSelection !== null) {
+            this.currentSelection = null;
+            this.executeSelectionCallbacks(null);
         }
     }
 
@@ -150,7 +210,7 @@ export class SelectionManager {
                 return null;
             }
 
-            const selectionId = this.generateSelectionId(textContent);
+            const selectionId = this.generateSelectionId(textContent, selectionRect);
             const textModel = this.assembleTextModel(selection, range);
 
             return {
@@ -179,8 +239,11 @@ export class SelectionManager {
     // --- Utilities ---
 
     /** Generates a unique selection ID based on text content and timestamp. */
-    private generateSelectionId(textContent: string): string {
-        return `selection_${this.simpleHash(textContent)}`;
+    private generateSelectionId(content: string, rect: DOMRect): string {
+        const baseHash = this.simpleHash(content);
+        const rectHash = this.simpleHash(`${rect.x}-${rect.y}-${rect.width}-${rect.height}`);
+
+        return `sel--${baseHash}-${rectHash}`;
     }
 
     /** Simple hash function for generating IDs from a string. */
@@ -191,11 +254,13 @@ export class SelectionManager {
             hash = (hash << 5) - hash + char;
             hash = hash & hash;
         }
-        return Math.abs(hash).toString(36) + Date.now().toString(36);
+        return Math.abs(hash).toString(36);
     }
 
     /** Executes all registered selection callbacks with the current state, catching errors. */
-    private executeSelectionCallbacks(state: SelectionState): void {
+    private executeSelectionCallbacks(state: SelectionState | null): void {
+        if (!state) return;
+
         this.onSelectionCallbacks.forEach(callback => {
             try {
                 callback(state);
