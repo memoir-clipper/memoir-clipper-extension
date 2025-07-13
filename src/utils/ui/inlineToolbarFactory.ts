@@ -743,7 +743,7 @@ export class InlineToolbarInstance extends BaseInstance {
     }
 
     /** Enhanced focus method with interaction type awareness. */
-    private focus(index: number, viaKeyboard: Boolean = true): void {
+    private focus(index: number, viaKeyboard: boolean = true): void {
         if (index < 0 || index >= this.focusOrder.length) return;
 
         const componentId = this.focusOrder[index];
