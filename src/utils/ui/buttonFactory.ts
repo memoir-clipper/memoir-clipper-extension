@@ -104,13 +104,13 @@ export class ButtonInstance extends BaseInstance {
         this.eventManager.addEventHandler(this.button, EVENTS.CLICK, (e: Event) => {
             e.stopPropagation();
             this.click();
-            this.button.blur(); // Remove focus after click
+            this.button.blur();
         });
 
-        // Keyboard interaction
+        // Keyboard interaction - Enter only
         this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
             const keyEvent = e as KeyboardEvent;
-            if (keyEvent.key === KEYS.ENTER || keyEvent.key === KEYS.SPACE) {
+            if (keyEvent.key === KEYS.ENTER) {
                 e.preventDefault();
                 this.click();
                 this.button.blur();

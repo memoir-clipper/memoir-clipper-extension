@@ -144,10 +144,10 @@ export class ToggleInstance extends BaseInstance {
             this.toggle();
         });
 
-        // Keyboard interaction
+        // Keyboard interaction - Enter only
         this.eventManager.addEventHandler(this.button, EVENTS.KEYDOWN, (e: Event) => {
             const keyEvent = e as KeyboardEvent;
-            if (keyEvent.key === KEYS.ENTER || keyEvent.key === KEYS.SPACE) {
+            if (keyEvent.key === KEYS.ENTER) {
                 e.preventDefault();
                 this.toggle();
             }
@@ -155,7 +155,6 @@ export class ToggleInstance extends BaseInstance {
 
         // Handle mousedown for focus
         this.eventManager.addEventHandler(this.button, EVENTS.MOUSEDOWN, (_e: Event) => {
-            // This should now work
             requestAnimationFrame(() => {
                 this.button.focus();
             });
