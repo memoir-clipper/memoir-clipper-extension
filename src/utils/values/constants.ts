@@ -11,6 +11,7 @@ export const MINIMUM_LOG_LEVEL: LogLevel =
 
 export const TRUE = 'true';
 export const FALSE = 'false';
+export const ZERO = '0';
 export const MINUS_ONE = '-1';
 export const SECONDS = 1000;
 
