@@ -26,7 +26,7 @@ export class ButtonFactory extends BaseFactory {
 
     /** Creates a new button instance and injects required styles. */
     public static create(config: ButtonConfig, variant: Variant = Variant.LIGHT): ButtonInstance {
-        this.ensureStyles(`$${ID_BUTTON_STYLES}-${variant}`, ButtonStylesSupplier.getStyles(variant));
+        this.ensureStyles(`${ID_BUTTON_STYLES}-${variant}`, ButtonStylesSupplier.getStyles(variant));
         return new ButtonInstance(config);
     }
 }
