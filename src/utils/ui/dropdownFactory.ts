@@ -2,9 +2,9 @@ import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
 import { MINUS_ONE, TRUE, FALSE } from '@/utils/values/constants';
-import { EVENTS } from '@/utils/values/enums';
+import { EVENTS, Variant } from '@/utils/values/enums';
 import { BaseFactory, BaseInstance } from './baseFactory';
-import type { DropdownOption, DropdownConfig, DropdownSelection, DropdownVariant } from './uiConfig';
+import type { DropdownOption, DropdownConfig, DropdownSelection } from './uiConfig';
 import {
     CLASS_DROPDOWN_ARROW,
     CLASS_DROPDOWN_BUTTON,
@@ -25,16 +25,12 @@ import {
     CLASS_DROPDOWN_SELECTION,
     ID_DROPDOWN_STYLES,
 } from '../values/ids';
-import { DropdownStyles } from '@/styles/dropdownStyles';
+import { DropdownStylesSupplier } from '@/styles/dropdownStylesSupplier';
 import { KEYS } from '../values/enums';
 
 // --- DropdownFactory ---
 
 export class DropdownFactory extends BaseFactory {
-    private static stylesMap: Record<DropdownVariant, string> = {
-        default: DropdownStyles.defaultDropdownStyle,
-    };
-
     public static html = {
         label: (label: string) => `<span class="${CLASS_DROPDOWN_LABEL}">${label}</span>`,
         selection: (text: string) => `<span class="${CLASS_DROPDOWN_SELECTION}">${text}</span>`,
@@ -54,14 +50,9 @@ export class DropdownFactory extends BaseFactory {
     public static create(
         options: DropdownOption[],
         config: DropdownConfig = {},
-        variant: DropdownVariant = 'default',
+        variant: Variant = Variant.LIGHT,
     ): DropdownInstance {
-        const styles = DropdownFactory.getStylesForVariant(
-            variant,
-            this.stylesMap,
-            DropdownStyles.defaultDropdownStyle,
-        );
-        DropdownFactory.ensureStyles(ID_DROPDOWN_STYLES, styles);
+        DropdownFactory.ensureStyles(`${ID_DROPDOWN_STYLES}-${variant}`, DropdownStylesSupplier.getStyles(variant));
         return new DropdownInstance(options, config);
     }
 }

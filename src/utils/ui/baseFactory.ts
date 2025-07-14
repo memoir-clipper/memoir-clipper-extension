@@ -17,15 +17,6 @@ export abstract class BaseFactory {
         document.head.appendChild(styleSheet);
         this.stylesInjected.set(styleId, true);
     }
-
-    /** Returns the style string for a given variant, or the default if not found. */
-    protected static getStylesForVariant<V extends string>(
-        variant: V,
-        stylesMap: Record<V, string>,
-        defaultStyle: string,
-    ): string {
-        return stylesMap[variant] ?? defaultStyle;
-    }
 }
 
 // --- BaseInstance: Lifecycle & DOM ---

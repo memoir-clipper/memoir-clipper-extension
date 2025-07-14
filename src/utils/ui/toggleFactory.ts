@@ -2,7 +2,7 @@ import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
 import { TRUE, FALSE } from '@/utils/values/constants';
-import { EVENTS, KEYS } from '@/utils/values/enums';
+import { EVENTS, KEYS, Variant } from '@/utils/values/enums';
 import { BaseFactory, BaseInstance } from './baseFactory';
 import {
     CLASS_TOGGLE_CONTAINER,
@@ -14,16 +14,12 @@ import {
     CLASS_TOGGLE_SHORTCUT,
     ID_TOGGLE_STYLES,
 } from '@/utils/values/ids';
-import { ToggleStyles } from '@/styles/toggleStyles';
-import type { ToggleConfig, ToggleVariant } from './uiConfig';
+import { ToggleStylesSupplier } from '@/styles/toggleStylesSupplier';
+import type { ToggleConfig } from './uiConfig';
 
 // --- ToggleFactory ---
 
 export class ToggleFactory extends BaseFactory {
-    private static stylesMap: Record<ToggleVariant, string> = {
-        default: ToggleStyles.defaultToggleStyle,
-    };
-
     // --- HTML Templates ---
 
     private static html = {
@@ -38,9 +34,8 @@ export class ToggleFactory extends BaseFactory {
     // --- Factory Method ---
 
     /** Creates a new ToggleInstance and ensures styles are injected. */
-    public static create(config: ToggleConfig, variant: ToggleVariant = 'default'): ToggleInstance {
-        const styles = ToggleFactory.getStylesForVariant(variant, this.stylesMap, ToggleStyles.defaultToggleStyle);
-        this.ensureStyles(ID_TOGGLE_STYLES, styles);
+    public static create(config: ToggleConfig, variant: Variant = Variant.LIGHT): ToggleInstance {
+        this.ensureStyles(`${ID_TOGGLE_STYLES}-${variant}`, ToggleStylesSupplier.getStyles(variant));
         return new ToggleInstance(config);
     }
 

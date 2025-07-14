@@ -1,4 +1,4 @@
-import { InlineToolbarStyles } from '@/styles/inlineToolbarStyles';
+import { InlineToolbarStylesSupplier } from '@/styles/inlineToolbarStylesSupplier';
 import { DOM_UTILS } from '../helpers/domUtils';
 import { logger } from '../helpers/logger';
 import {
@@ -7,7 +7,7 @@ import {
     TOOLBAR_SPACES_DEFAULT_OPTIONS,
     TOOLBAR_TAGS_DEFAULT_OPTIONS,
 } from '../values/constants';
-import { KEYS, EVENTS } from '../values/enums';
+import { KEYS, EVENTS, Variant } from '../values/enums';
 import { ATTRS } from '../values/htmlAttributes';
 import { TAGS } from '../values/htmlTags';
 import {
@@ -41,9 +41,11 @@ export class InlineToolbarFactory extends BaseFactory {
     protected static readonly TAG = '[InlineToolbarFactory]';
 
     /** Creates an InlineToolbarInstance and ensures styles are applied. */
-    public static create(config: InlineToolbarConfig = {}): InlineToolbarInstance {
-        this.ensureStyles(ID_STYLE_INLINE_TOOLBAR, InlineToolbarStyles.defaultToolbarStyle);
-        return new InlineToolbarInstance(config);
+    public static create(config: InlineToolbarConfig = {}, variant: Variant = Variant.LIGHT): InlineToolbarInstance {
+        const toolbarStyles = new InlineToolbarStylesSupplier();
+        const styles = toolbarStyles.getStyles(variant);
+        this.ensureStyles(`${ID_STYLE_INLINE_TOOLBAR}-${variant}`, styles);
+        return new InlineToolbarInstance(config, variant);
     }
 
     public static html = {
@@ -148,7 +150,10 @@ export class InlineToolbarInstance extends BaseInstance {
         return [this.spaceId, this.colorId, this.tagId, this.aiActionId];
     }
 
-    constructor(private config: InlineToolbarConfig) {
+    constructor(
+        private config: InlineToolbarConfig,
+        private variant: Variant = Variant.LIGHT,
+    ) {
         super();
         this.initializeDefaultOptions();
         this.selectedData = this.getDefaultSelectedData();
@@ -505,25 +510,29 @@ export class InlineToolbarInstance extends BaseInstance {
     /** Creates the spaces dropdown component. */
     private createSpacesDropdown(): { id: string; instance: BaseInstance | null } {
         const id = this.spaceId;
-        const dropdown = DropdownFactory.create(this.spaceOptions, {
-            label: 'Space',
-            placeholder: 'Select space',
-            tooltip: 'Select a space',
-            closeOnSelect: true,
-            allowCustom: true,
-            customInputPlaceholder: 'Create new space...',
-            onSelect: (selection: DropdownSelection) => {
-                this.selectedData.spaceId = selection.single?.id;
+        const dropdown = DropdownFactory.create(
+            this.spaceOptions,
+            {
+                label: 'Space',
+                placeholder: 'Select space',
+                tooltip: 'Select a space',
+                closeOnSelect: true,
+                allowCustom: true,
+                customInputPlaceholder: 'Create new space...',
+                onSelect: (selection: DropdownSelection) => {
+                    this.selectedData.spaceId = selection.single?.id;
+                },
+                onCustomCreate: (spaceName: string) => {
+                    const newSpace: DropdownOption = {
+                        id: this.generateId(spaceName),
+                        label: spaceName.trim(),
+                    };
+                    this.addSpaceOption(newSpace);
+                    return newSpace;
+                },
             },
-            onCustomCreate: (spaceName: string) => {
-                const newSpace: DropdownOption = {
-                    id: this.generateId(spaceName),
-                    label: spaceName.trim(),
-                };
-                this.addSpaceOption(newSpace);
-                return newSpace;
-            },
-        });
+            this.variant,
+        );
         const defaultSpaceId = this.spaceOptions[0]?.id ?? '';
         if (defaultSpaceId) {
             dropdown.setSelection(defaultSpaceId);
@@ -535,29 +544,33 @@ export class InlineToolbarInstance extends BaseInstance {
     /** Creates the tags dropdown component. */
     private createTagsDropdown(): { id: string; instance: BaseInstance | null } {
         const id = this.tagId;
-        const dropdown = DropdownFactory.create(this.tagOptions, {
-            label: 'Tags',
-            placeholder: 'Add tags...',
-            tooltip: 'Select or create tags',
-            multiSelect: true,
-            allowCustom: true,
-            customInputPlaceholder: 'Create new tag...',
-            closeOnSelect: false,
-            buttonTemplateCallback: InlineToolbarFactory.html.tagsDropdownButton,
-            onCustomCreate: (tagName: string) => {
-                const newTag: DropdownOption = {
-                    id: this.generateId(tagName),
-                    label: tagName.trim(),
-                    additionalData: { color: this.generateRandomColor() },
-                    render: InlineToolbarFactory.html.tagsDropdownOption,
-                };
-                this.addTagOption(newTag);
-                return newTag;
+        const dropdown = DropdownFactory.create(
+            this.tagOptions,
+            {
+                label: 'Tags',
+                placeholder: 'Add tags...',
+                tooltip: 'Select or create tags',
+                multiSelect: true,
+                allowCustom: true,
+                customInputPlaceholder: 'Create new tag...',
+                closeOnSelect: false,
+                buttonTemplateCallback: InlineToolbarFactory.html.tagsDropdownButton,
+                onCustomCreate: (tagName: string) => {
+                    const newTag: DropdownOption = {
+                        id: this.generateId(tagName),
+                        label: tagName.trim(),
+                        additionalData: { color: this.generateRandomColor() },
+                        render: InlineToolbarFactory.html.tagsDropdownOption,
+                    };
+                    this.addTagOption(newTag);
+                    return newTag;
+                },
+                onSelect: (selection: DropdownSelection) => {
+                    this.selectedData.tags = selection.multiple?.map(tag => tag.id) ?? [];
+                },
             },
-            onSelect: (selection: DropdownSelection) => {
-                this.selectedData.tags = selection.multiple?.map(tag => tag.id) ?? [];
-            },
-        });
+            this.variant,
+        );
         return { id, instance: dropdown };
     }
 
@@ -574,17 +587,21 @@ export class InlineToolbarInstance extends BaseInstance {
         TOOLBAR_COLORS.forEach(color => {
             keyboardShortcuts[color.shortcut.toUpperCase()] = color.id;
         });
-        const dropdown = DropdownFactory.create(options, {
-            label: 'Color',
-            placeholder: 'Select color',
-            tooltip: 'Select color (use hotkeys B/Y/P/O/G)',
-            closeOnSelect: true,
-            keyboardShortcuts,
-            buttonTemplateCallback: InlineToolbarFactory.html.colorsDropdownButton,
-            onSelect: (selection: DropdownSelection) => {
-                this.selectedData.colorId = selection.single?.id;
+        const dropdown = DropdownFactory.create(
+            options,
+            {
+                label: 'Color',
+                placeholder: 'Select color',
+                tooltip: 'Select color (use hotkeys B/Y/P/O/G)',
+                closeOnSelect: true,
+                keyboardShortcuts,
+                buttonTemplateCallback: InlineToolbarFactory.html.colorsDropdownButton,
+                onSelect: (selection: DropdownSelection) => {
+                    this.selectedData.colorId = selection.single?.id;
+                },
             },
-        });
+            this.variant,
+        );
         dropdown.setSelection(options[0]?.id ?? '');
         return { id, instance: dropdown };
     }
@@ -592,15 +609,19 @@ export class InlineToolbarInstance extends BaseInstance {
     /** Creates the AI actions dropdown component. */
     private createAIActionsDropdown(): { id: string; instance: BaseInstance | null } {
         const id = this.aiActionId;
-        const dropdown = DropdownFactory.create(TOOLBAR_AI_ACTIONS_OPTIONS, {
-            label: 'AI Action',
-            placeholder: 'Select action',
-            tooltip: 'Select AI action to apply',
-            closeOnSelect: true,
-            onSelect: (selection: DropdownSelection) => {
-                this.selectedData.aiActionId = selection.single?.id ?? undefined;
+        const dropdown = DropdownFactory.create(
+            TOOLBAR_AI_ACTIONS_OPTIONS,
+            {
+                label: 'AI Action',
+                placeholder: 'Select action',
+                tooltip: 'Select AI action to apply',
+                closeOnSelect: true,
+                onSelect: (selection: DropdownSelection) => {
+                    this.selectedData.aiActionId = selection.single?.id ?? undefined;
+                },
             },
-        });
+            this.variant,
+        );
         dropdown.setSelection('');
         return { id, instance: dropdown };
     }
@@ -608,41 +629,50 @@ export class InlineToolbarInstance extends BaseInstance {
     /** Creates the formatting toggle component. */
     private createFormattingToggle(): { id: string; instance: BaseInstance | null } {
         const id = this.formattingId;
-        const toggle = ToggleFactory.create({
-            label: 'Preserve Formatting',
-            initialState: true,
-            tooltip: 'Keep original text formatting (Shift+F)',
-            shortcutKey: KEYS.F,
-            shortcutModifier: 'Shift',
-            onChange: (state: boolean) => {
-                this.selectedData.preserveFormatting = state;
+        const toggle = ToggleFactory.create(
+            {
+                label: 'Preserve Formatting',
+                initialState: true,
+                tooltip: 'Keep original text formatting (Shift+F)',
+                shortcutKey: KEYS.F,
+                shortcutModifier: 'Shift',
+                onChange: (state: boolean) => {
+                    this.selectedData.preserveFormatting = state;
+                },
             },
-        });
+            this.variant,
+        );
         return { id, instance: toggle };
     }
 
     /** Creates the save button component. */
     private createSaveButton(): { id: string; instance: BaseInstance | null } {
         const id = InlineToolbarInstance.componentIds.SAVE;
-        const button = ButtonFactory.create({
-            label: 'Save',
-            primary: true,
-            tooltip: 'Save this snippet (Enter)',
-            onClick: () => this.config.onSave?.(this.selectedData),
-        });
+        const button = ButtonFactory.create(
+            {
+                label: 'Save',
+                primary: true,
+                tooltip: 'Save this snippet (Enter)',
+                onClick: () => this.config.onSave?.(this.selectedData),
+            },
+            this.variant,
+        );
         return { id, instance: button };
     }
 
     /** Creates the copy button component. */
     private createCopyButton(): { id: string; instance: BaseInstance | null } {
         const id = InlineToolbarInstance.componentIds.COPY;
-        const button = ButtonFactory.create({
-            label: 'Copy',
-            primary: false,
-            tooltip: 'Copy as HTML (Ctrl+Shift+C)',
-            icon: InlineToolbarFactory.html.copyIcon,
-            // onClick: () => this.config.onCopy?.(this.selectedData),
-        });
+        const button = ButtonFactory.create(
+            {
+                label: 'Copy',
+                primary: false,
+                tooltip: 'Copy as HTML (Ctrl+Shift+C)',
+                icon: InlineToolbarFactory.html.copyIcon,
+                // onClick: () => this.config.onCopy?.(this.selectedData),
+            },
+            this.variant,
+        );
         return { id, instance: button };
     }
 
@@ -743,7 +773,7 @@ export class InlineToolbarInstance extends BaseInstance {
     }
 
     /** Enhanced focus method with interaction type awareness. */
-    private focus(index: number, viaKeyboard: boolean = true): void {
+    private focus(index: number, viaKeyboard = true): void {
         if (index < 0 || index >= this.focusOrder.length) return;
 
         const componentId = this.focusOrder[index];

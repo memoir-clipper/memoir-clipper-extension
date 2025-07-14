@@ -1,7 +1,7 @@
 import { DOM_UTILS } from '@/utils/helpers/domUtils';
 import { TAGS } from '@/utils/values/htmlTags';
 import { ATTRS } from '@/utils/values/htmlAttributes';
-import { EVENTS, KEYS } from '@/utils/values/enums';
+import { EVENTS, KEYS, Variant } from '@/utils/values/enums';
 import { BaseFactory, BaseInstance } from './baseFactory';
 import {
     CLASS_BUTTON_CONTAINER,
@@ -13,25 +13,20 @@ import {
     CLASS_BUTTON_LABEL,
     ID_BUTTON_STYLES,
 } from '@/utils/values/ids';
-import { ButtonStyles } from '@/styles/buttonStyles';
-import type { ButtonConfig, ButtonVariant } from './uiConfig';
+import type { ButtonConfig } from './uiConfig';
+import { ButtonStylesSupplier } from '@/styles/buttonStylesSupplier';
 
 // --- ButtonFactory ---
 
 export class ButtonFactory extends BaseFactory {
-    private static stylesMap: Record<ButtonVariant, string> = {
-        default: ButtonStyles.defaultButtonStyle,
-    };
-
     public static html = {
         icon: (icon: string) => `<span class="${CLASS_BUTTON_ICON}">${icon}</span>`,
         label: (label: string) => `<span class="${CLASS_BUTTON_LABEL}">${label}</span>`,
     };
 
     /** Creates a new button instance and injects required styles. */
-    public static create(config: ButtonConfig, variant: ButtonVariant = 'default'): ButtonInstance {
-        const styles = ButtonFactory.getStylesForVariant(variant, this.stylesMap, ButtonStyles.defaultButtonStyle);
-        this.ensureStyles(ID_BUTTON_STYLES, styles);
+    public static create(config: ButtonConfig, variant: Variant = Variant.LIGHT): ButtonInstance {
+        this.ensureStyles(`$${ID_BUTTON_STYLES}-${variant}`, ButtonStylesSupplier.getStyles(variant));
         return new ButtonInstance(config);
     }
 }
