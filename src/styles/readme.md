@@ -20,32 +20,52 @@ The `styles/` package contains all CSS and style-related logic for the extension
   Dynamically injects the Tailwind CSS into content scripts at runtime.  
   - Ensures consistent styling for injected UI elements on any web page.
 
-- **buttonStyles.ts**  
-  Contains isolated CSS and utility functions for styling extension buttons.
+- **colors.ts**  
+  Centralized color catalog for all UI components.  
+  - Provides semantic and scale-based color tokens (e.g., `gray100`, `blue500`, `white`, `transparent`).
 
-- **dropdownStyles.ts**  
-  Contains isolated CSS and utility functions for dropdown UI components.
-  - Dropdown styles are now responsive and support a universal variant type.
+- **dimensions.ts**  
+  Centralized dimension catalog for spacing, sizing, border radius, font sizes, shadows, and transitions.  
+  - Ensures consistent sizing and spacing across all components.
 
-- **inlineToolbarStyles.ts**  
-  Contains isolated CSS and utility functions for the inline/contextual toolbar.
-  - Toolbar styles inherit the universal variant type for consistent theming.
+- **baseStylesSupplier.ts**  
+  Abstract base class for style suppliers.  
+  - Handles CSS variable mapping, variant-specific overrides, and style composition.
 
-- **toggleStyles.ts**  
-  Contains isolated CSS and utility functions for toggle switches and similar UI elements.
+- **buttonStylesSupplier.ts**  
+  Isolated CSS and utility functions for styling extension buttons.  
+  - Uses the centralized color and dimension catalogs.
+
+- **dropdownStylesSupplier.ts**  
+  Isolated CSS and utility functions for dropdown UI components.  
+  - Responsive, variant-aware, and catalog-driven.
+
+- **inlineToolbarStylesSupplier.ts**  
+  Isolated CSS and utility functions for the inline/contextual toolbar.  
+  - Inherits the universal variant type for consistent theming.
+
+- **toggleStylesSupplier.ts**  
+  Isolated CSS and utility functions for toggle switches and similar UI elements.
 
 ---
 
 ## Key Responsibilities
 
 - **Base Styling:**  
-  Provides a consistent, utility-first styling foundation using Tailwind CSS.
+  Provides a consistent, utility-first styling foundation using Tailwind CSS and catalog-driven tokens.
 
 - **Dynamic Style Injection:**  
   Ensures that content script UIs are styled correctly, regardless of the host page's styles.
 
 - **Component Isolation & Variants:**  
-  Keeps styles for buttons, dropdowns, toolbars, and toggles modular and isolated to prevent conflicts. All components support a universal variant type for future theming.
+  Keeps styles for buttons, dropdowns, toolbars, and toggles modular and isolated to prevent conflicts.  
+  All components support a universal variant type for future theming.
+
+- **Centralized Catalogs:**  
+  All colors and dimensions are defined in dedicated files and referenced via CSS variables, ensuring reusability and maintainability.
+
+- **Variant-Specific Styling:**  
+  Each style supplier defines base styles and variant-specific overrides, with differences handled via CSS variables for colors and sizing.
 
 ---
 

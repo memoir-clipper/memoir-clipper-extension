@@ -86,3 +86,8 @@ export enum EVENTS {
     FOCUS = 'focus',
     BLUR = 'blur',
 }
+
+export enum Variant {
+    LIGHT = 'light',
+    DARK = 'dark',
+}

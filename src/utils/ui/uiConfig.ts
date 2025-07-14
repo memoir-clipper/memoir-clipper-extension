@@ -85,10 +85,3 @@ export type CachedToolbarSelectedData = {
     timestamp: number;
     selectionId: string;
 };
-
-/**
- * Supported variants for dropdown, toggle, and button components.
- */
-export type DropdownVariant = 'default';
-export type ToggleVariant = 'default';
-export type ButtonVariant = 'default';
