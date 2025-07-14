@@ -26,7 +26,7 @@ import {
     ID_DROPDOWN_STYLES,
 } from '../values/ids';
 import { DropdownStylesSupplier } from '@/styles/dropdownStylesSupplier';
-import { KEYS } from '../values/enums';
+import { KEYS } from '@/utils/values/enums';
 
 // --- DropdownFactory ---
 
